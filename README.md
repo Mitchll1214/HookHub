@@ -165,17 +165,20 @@ Cloudflare 控制台 → **Workers & Pages → KV** → 创建命名空间，例
 
 打开 `/admin/` → 输入 `ADMIN_PASSWORD` → 进入「全局设置」→ 点「**初始化系统**」（写入默认设置 + 默认路由，消耗 1 次 KV 写）。
 
-### wrangler 本地部署（备选）
+### wrangler 本地部署 / 开发（备选）
 
-如果不用 Git 关联，也可以本地部署：
-
-```bash
-npm install
-npx wrangler login
-npx wrangler pages deploy public --project-name hookhub
-```
-
-> 注意：`wrangler.toml` 里默认**没有**填写 KV id（避免占位符提交），KV 绑定在控制台配置即可；本地开发用 `--kv=KV_CONFIG` 模拟。
+> ⚠️ **重要：仓库根目录不要放 `wrangler.toml`。** Cloudflare Pages 检测到仓库里有 `wrangler.toml` 时，会把**绑定（KV 等）和环境变量的管理权从控制台切换到该文件**，导致控制台提示「此项目的绑定在通过 wrangler.toml 进行管理」、无法在页面编辑、重新部署后配置像被清空。因此：
+>
+> - 仓库只保留 **`wrangler.toml.example`**（配置模板），`wrangler.toml` 已在 `.gitignore` 中忽略。
+> - **线上部署一律在 Pages 控制台配置**（KV 绑定 `KV_CONFIG` + 环境变量 `ADMIN_PASSWORD` / `SIGN_SECRET`），仓库里没有任何配置文件接管它们。
+> - 需要在本地使用 CLI 时，先把模板复制成本地文件，再按需填入真实 KV id：
+>
+>   ```bash
+>   cp wrangler.toml.example wrangler.toml   # 本地专用，不会被提交
+>   # 编辑 wrangler.toml，填入真实 KV 命名空间 id
+>   npx wrangler pages dev public --kv=KV_CONFIG      # 本地起服务
+>   npx wrangler pages deploy public --project-name hookhub   # CLI 部署
+>   ```
 
 ---
 
@@ -524,33 +527,34 @@ npm test    # 运行全部测试
 ### 部署与额度
 
 1. **保持账户在 Free 计划**：Free 无超额扣费，升级 Paid 后才开始计费，切勿误升级。
-2. **构建输出目录必须填 `public`**：留空会导致页面 404。
-3. **KV 绑定名必须叫 `KV_CONFIG`**：拼错会 500「缺少 KV_CONFIG 绑定」。
-4. **环境变量用「加密」方式保存**：`ADMIN_PASSWORD`、`SIGN_SECRET` 都要以 Secret 形式加密，不要写进仓库任何文件。
-5. **webhook 请求路径零 KV 写入**：限流、去重、统计、日志一律不碰 KV，这是免费额度的根基。
-6. **绑定或环境变量改动后必须重新部署**：保存配置后点 Retry deployment 才生效。
+2. **仓库不要提交 `wrangler.toml`**：一旦仓库根目录出现该文件，Pages 会把**绑定（KV）与环境变量的管理权从控制台切走**，控制台提示「此项目的绑定在通过 wrangler.toml 进行管理」、无法在页面编辑、重新部署后配置像被清空。仓库只保留 `wrangler.toml.example`（`.gitignore` 已忽略 `wrangler.toml`）。
+3. **构建输出目录必须填 `public`**：留空会导致页面 404。
+4. **KV 绑定名必须叫 `KV_CONFIG`**：拼错会 500「缺少 KV_CONFIG 绑定」。
+5. **环境变量用「加密」方式保存**：`ADMIN_PASSWORD`、`SIGN_SECRET` 都要以 Secret 形式加密，不要写进仓库任何文件。
+6. **webhook 请求路径零 KV 写入**：限流、去重、统计、日志一律不碰 KV，这是免费额度的根基。
+7. **绑定或环境变量改动后必须重新部署**：保存配置后点 Retry deployment 才生效。
 
 ### 安全
 
-7. **`ADMIN_PASSWORD` 一定要设**：缺失时所有 `/api/*` 管理接口都会拒绝访问。
-8. **令牌要设白名单**：`allowedChannels` 留空 = 该令牌可向所有渠道发消息；敏感场景建议按令牌限定渠道。
-9. **令牌会过期**：可设 `expiresAt`；过期令牌直接 403，调用方需续期。
-10. **自定义 Webhook 渠道的 URL 过 SSRF**：内网地址会被拒，这是特性不是 bug。
-11. **无日志设计**：系统不提供审计日志，排障全靠 webhook 同步返回的 `results` 数组。需要审计请自行在渠道侧留痕。
+8. **`ADMIN_PASSWORD` 一定要设**：缺失时所有 `/api/*` 管理接口都会拒绝访问。
+9. **令牌要设白名单**：`allowedChannels` 留空 = 该令牌可向所有渠道发消息；敏感场景建议按令牌限定渠道。
+10. **令牌会过期**：可设 `expiresAt`；过期令牌直接 403，调用方需续期。
+11. **自定义 Webhook 渠道的 URL 过 SSRF**：内网地址会被拒，这是特性不是 bug。
+12. **无日志设计**：系统不提供审计日志，排障全靠 webhook 同步返回的 `results` 数组。需要审计请自行在渠道侧留痕。
 
 ### 使用
 
-12. **`data` 字段是模板/路由的扩展变量空间**：任意 JSON 对象，模板里用 `data.xxx` 引用，路由条件里用 `data.xxx` 匹配。
-13. **内容超渠道上限自动截断**：Bark 4096、Telegram 4096、企业微信 2048、Discord 2000 等，后台会显示上限并实时标红。
-14. **测试发送不写 KV 不记日志**：放心点「测试」，不影响任何额度与状态。
-15. **导入配置会覆盖同名配置**：从另一份导出 JSON 导入前，确认目标系统没有需要保留的同名渠道/令牌/路由。
+13. **`data` 字段是模板/路由的扩展变量空间**：任意 JSON 对象，模板里用 `data.xxx` 引用，路由条件里用 `data.xxx` 匹配。
+14. **内容超渠道上限自动截断**：Bark 4096、Telegram 4096、企业微信 2048、Discord 2000 等，后台会显示上限并实时标红。
+15. **测试发送不写 KV 不记日志**：放心点「测试」，不影响任何额度与状态。
+16. **导入配置会覆盖同名配置**：从另一份导出 JSON 导入前，确认目标系统没有需要保留的同名渠道/令牌/路由。
 
 ### 平台边界
 
-16. **限流计数在 isolate 重启后清零**：内存限流是「防误刷」级别，不是精确配额工具。
-17. **SSRF 不做解析级阻断**：依赖域名黑名单 + TLS 证书链，这是 Workers 平台能力边界。
-18. **不要做重计算**：免费 CPU 10ms/请求，本项目转发逻辑极轻；不要在 webhook 里加图片处理等重活。
-19. **单请求 subrequest 数 ≤ 渠道数**：免费版上限 50，正常配置远低于此；极端 fan-out 场景注意。
+17. **限流计数在 isolate 重启后清零**：内存限流是「防误刷」级别，不是精确配额工具。
+18. **SSRF 不做解析级阻断**：依赖域名黑名单 + TLS 证书链，这是 Workers 平台能力边界。
+19. **不要做重计算**：免费 CPU 10ms/请求，本项目转发逻辑极轻；不要在 webhook 里加图片处理等重活。
+20. **单请求 subrequest 数 ≤ 渠道数**：免费版上限 50，正常配置远低于此；极端 fan-out 场景注意。
 
 ---
 
