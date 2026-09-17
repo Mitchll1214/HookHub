@@ -569,7 +569,14 @@ npm test    # 运行全部测试
 
 **返回 429？** 同一令牌每分钟最多 60 次（内存滑动窗口，重启即清零）。稍等再试。
 
-**返回 500「缺少 KV_CONFIG 绑定」？** 没在 Pages 控制台添加 KV 绑定，或绑定名不是 `KV_CONFIG`。
+**登录提示「缺少 KV_CONFIG 绑定」或 500 ？** 这是**部署问题，不是密码问题**。按序排查：
+
+1. **绑定名写错**：Pages 控制台 → Settings → Functions → KV namespace bindings，确认 **Variable name 是 `KV_CONFIG`**（不是别的名字，不能带空格）；
+2. **绑定后没重新部署**：Cloudflare 的绑定/环境变量改动**必须重新构建部署才注入运行时**——保存绑定后点 **Retry deployment**；
+3. **Production / Preview 都要绑**：只在 Production 绑了、访问的是 Preview 域名时也会报缺绑定；
+4. **确认没有残留 `wrangler.toml`**：仓库根目录存在 `wrangler.toml` 会把绑定管理权接管走，导致控制台绑定不生效（本项目已改为只保留 `wrangler.toml.example`）。
+
+> 修复后：登录页会分别提示「密码错误」或「缺少 KV_CONFIG 绑定」，两者不再混淆。
 
 **渠道没收到？** 看响应里的 `results` 数组：`channel` / `ok` / `status` / `error` 逐条列出。多数是 Key 填错、渠道停用、令牌白名单未包含该渠道、钉钉/飞书签名不匹配。
 

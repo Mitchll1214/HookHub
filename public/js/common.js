@@ -63,13 +63,18 @@ window.HookHub = (() => {
     const res = await fetch(path, opts);
     let data = null;
     try { data = await res.json(); } catch { /* 非 JSON */ }
-    if (res.status === 401) {
-      // 密码失效：清空并提示
-      clearPassword();
-      throw new ApiError('登录已失效，请重新输入管理员密码', 401, data);
-    }
     if (!res.ok) {
-      throw new ApiError((data && data.error) || `请求失败 (${res.status})`, res.status, data);
+      // 优先透传服务端真实错误（如「缺少 KV_CONFIG 绑定」），
+      // 让前端能区分「密码问题」和「部署/绑定问题」
+      const serverMsg = data && data.error ? data.error : '';
+      if (res.status === 401) {
+        clearPassword();
+        throw new ApiError(
+          serverMsg || '登录已失效，请重新输入管理员密码',
+          401, data
+        );
+      }
+      throw new ApiError(serverMsg || `请求失败 (${res.status})`, res.status, data);
     }
     return data;
   }
@@ -184,16 +189,29 @@ window.HookHub = (() => {
             m.close();
             resolve(pwd);
           } else {
-            err.style.display = 'block';
+            // 后端不支持 ok=false + 200，一般不会走到这里；防御处理
+            showLoginError(err, '密码校验未通过');
             btn.disabled = false;
             btn.textContent = '登录';
           }
-        } catch {
-          err.style.display = 'block';
+        } catch (e) {
+          const msg = (e && e.message) || '登录失败';
+          // 区分「密码不对」与「KV 绑定未生效」两类问题
+          if (msg.includes('KV_CONFIG') || msg.includes('KV')) {
+            showLoginError(err,
+              '⚠️ ' + msg + '\n\n请确认：① 已在 Pages 控制台绑定 KV（变量名 KV_CONFIG）；② 绑定后已重新部署（Retry deployment）。绑定不生效时无法登录，这是部署问题，不是密码问题。');
+          } else {
+            showLoginError(err, msg);
+          }
           btn.disabled = false;
           btn.textContent = '登录';
         }
       };
+      function showLoginError(errEl, text) {
+        errEl.textContent = text;
+        errEl.style.display = 'block';
+        errEl.style.whiteSpace = 'pre-line';
+      }
       btn.addEventListener('click', submit);
       input.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
       setTimeout(() => input.focus(), 30);
