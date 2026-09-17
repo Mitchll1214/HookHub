@@ -85,7 +85,7 @@
 | `ADMIN_PASSWORD` | ✅ | 管理员密码，所有 `/api/*` 管理接口校验用（`X-Admin-Password` 请求头或 `Authorization: Bearer`），常量时间比较 | `functions/api/_lib.js` |
 | `SIGN_SECRET` | 可选 | 启用后，调用 `/hook/:token` 必须携带 `X-Signature` + `X-Timestamp` 头（HMAC-SHA256 校验） | `functions/hook/[token].js` |
 
-> ⚠️ 注意：**不存在 `CORS_ORIGIN` 环境变量**。CORS 白名单在后台「全局设置」里配置（默认允许所有来源）。
+
 
 ### 请求字段变量（webhook 调用方可用）
 
