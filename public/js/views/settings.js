@@ -36,6 +36,10 @@
         try {
           const data = await H.api('/api/settings', { method: 'POST', body: { settings: {} } });
           H.toast('系统已初始化，默认路由已创建', 'ok');
+          // 同步顶部「未初始化」徽章状态（隐藏 + 更新全局标记）
+          const badge = document.getElementById('initBadge');
+          if (badge) { badge.style.display = 'none'; badge.textContent = ''; }
+          window.__hookhubInitialized = true;
           renderSettings(box);
         } catch (e) { H.toast(e.message, 'err'); }
       });

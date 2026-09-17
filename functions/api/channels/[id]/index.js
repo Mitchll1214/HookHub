@@ -1,10 +1,10 @@
-// /api/channels/[id] —— 单个渠道：读 / 改 / 删 / 测试发送
-// 注意：import 路径相对本文件（functions/api/channels/），lib 在项目根目录，故用 ../../lib
+// /api/channels/[id]/ —— 单个渠道：读 / 改 / 删（测试发送见同目录 test.js）
+// Pages Functions 中 [id].js 只匹配单路径段，故 CRUD 在此，/:id/test 拆分到 test.js。
 
-import { withAdmin } from '../_lib.js';
-import { json } from '../../_lib/http.js';
-import { getChannel, maskSecret, KV_KEYS } from '../../_lib/core.js';
-import { registry } from '../../_adapters/index.js';
+import { withAdmin } from '../../_lib.js';
+import { json } from '../../../_lib/http.js';
+import { getChannel, maskSecret, KV_KEYS } from '../../../_lib/core.js';
+import { registry } from '../../../_adapters/index.js';
 
 function serializeChannel(ch, { full = false } = {}) {
   const out = {
@@ -88,39 +88,4 @@ export const onRequestDelete = (context) =>
     if (!ch) return json({ ok: false, error: '渠道不存在' }, 404, cors);
     await store.delete(KV_KEYS.channel(id)); // 唯一 KV 删除点之一
     return json({ ok: true }, 200, cors);
-  });
-
-// POST /api/channels/:id/test —— 测试发送（不写 KV、不记日志）
-export const onRequestPost = (context) =>
-  withAdmin(context, async ({ store, cors, settings }) => {
-    const id = context.params.id;
-    const url = new URL(context.request.url);
-    if (!url.pathname.endsWith('/test')) {
-      return json({ ok: false, error: '方法不支持' }, 405, cors);
-    }
-    const ch = await getChannel(store, id);
-    if (!ch) return json({ ok: false, error: '渠道不存在' }, 404, cors);
-
-    const mock = {
-      title: 'HookHub 测试消息',
-      body: '这是一条测试消息，用于验证渠道配置是否可用。\n\n发送时间: ' + new Date().toISOString(),
-      level: 'info',
-      channel: '',
-      targets: [],
-      tags: ['test'],
-      url: '',
-      data: { test: true, from: 'HookHub' },
-    };
-    const adapter = registry[ch.type];
-    if (!adapter) return json({ ok: false, error: `未知渠道类型: ${ch.type}` }, 400, cors);
-    const result = await adapter.send(ch, mock, {
-      timeoutMs: settings.timeoutMs || 8000,
-      retries: settings.retries != null ? settings.retries : 2,
-    });
-    return json({
-      ok: result.ok,
-      status: result.status,
-      error: result.error || '',
-      raw: result.body || '',
-    }, result.ok ? 200 : 502, cors);
   });
