@@ -175,7 +175,15 @@ window.HookHub = (() => {
       const foot = el('div', { class: 'modal-foot' });
       const btn = el('button', { class: 'btn btn-primary', text: '登录' });
       foot.appendChild(btn);
-      const m = openModal({ title, content, footer: foot, onClose: () => resolve(null) });
+
+      // 登录是否已成功：成功后 m.close() 会触发 onClose，需避免把结果覆盖成 null
+      let resolved = false;
+      const m = openModal({
+        title, content, footer: foot,
+        onClose: () => {
+          if (!resolved) resolve(null); // 仅「用户主动关闭」视为取消
+        },
+      });
 
       const submit = async () => {
         const pwd = input.value.trim();
@@ -185,6 +193,7 @@ window.HookHub = (() => {
         try {
           const data = await api('/api/auth/check', { pwd });
           if (data.ok) {
+            resolved = true;      // 先标记成功，避免 onClose 覆盖
             setPassword(pwd);
             m.close();
             resolve(pwd);
