@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HookHub — 一个 Webhook，多渠道送达</title>
+  <meta name="description" content="HookHub：把通用 Webhook 请求转发到 Bark / Server酱 / PushPlus / 企业微信 / 钉钉 / 飞书 / Telegram / ntfy 等渠道的免费开源服务。" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%2320516e'/><text x='50' y='68' font-size='52' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'>H</text></svg>" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+  <!-- 顶部栏 -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/">
+        <span class="brand-dot"></span> HookHub
+        <span class="brand-sub">一个 Webhook，多渠道送达</span>
+      </a>
+      <button class="btn btn-primary" id="adminLoginBtn">管理员登录</button>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="container">
+      <h1>一个 Webhook 地址，<br />同时送达你的所有通知渠道</h1>
+      <p class="lead">调用一次通用格式的 HTTP 请求，HookHub 按你配置的规则，把消息并行分发到 Bark、Server酱、PushPlus、企业微信、钉钉、飞书、Telegram、ntfy 等渠道。</p>
+      <div class="flow">
+        <span class="node">你的服务 / 脚本 / 监控</span>
+        <span class="arrow">→</span>
+        <span class="node accent">HookHub Webhook</span>
+        <span class="arrow">→</span>
+        <span class="node">Bark</span>
+        <span class="node">Server酱</span>
+        <span class="node">企微</span>
+        <span class="node">钉钉</span>
+        <span class="node">飞书</span>
+        <span class="node">…</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 三步上手 -->
+  <section class="section-block">
+    <div class="container-narrow">
+      <h2>三步上手</h2>
+      <ol class="steps">
+        <li><strong>登录后台</strong> — 点击右上角「管理员登录」，输入部署时配置的 <code>ADMIN_PASSWORD</code>。</li>
+        <li><strong>配置渠道</strong> — 在「渠道管理」添加你要用的渠道（如 Bark），粘贴对应的 Key / Token，点「测试发送」验证。</li>
+        <li><strong>调用 Webhook</strong> — 在「令牌管理」生成一个令牌，复制 <code>/hook/你的令牌</code> 地址，按下面格式发请求即可。</li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- 请求格式 -->
+  <section class="section-block">
+    <div class="container-narrow">
+      <h2>通用请求格式</h2>
+      <p>POST 一个 JSON 到你的 Webhook 地址（也兼容 <code>GET</code>、<code>表单</code>、<code>纯文本</code>）：</p>
+      <pre><code>POST /hook/YOUR_TOKEN
+Content-Type: application/json
+
+{
+  "title": "服务器报警",
+  "body": "磁盘使用率超过 90%，请及时处理。",
+  "level": "error",            // info | success | warning | error
+  "channel": "bark",           // 可选：指定单个渠道
+  "targets": ["group:oncall"], // 可选：指定目标渠道/组（限制在令牌白名单内）
+  "tags": ["disk", "prod"],    // 可选：用于路由匹配
+  "url": "https://...",        // 可选：关联链接
+  "data": { "host": "web-01" } // 可选：任意自定义数据，模板/路由中可用 data.xxx
+}</code></pre>
+      <h3>字段说明</h3>
+      <div class="table-wrap">
+        <table class="kv-table">
+          <thead><tr><th>字段</th><th>类型</th><th>说明</th></tr></thead>
+          <tbody>
+            <tr><td>title</td><td>string</td><td>标题（不传时取 body 首行）</td></tr>
+            <tr><td>body</td><td>string</td><td>正文（也兼容 content / desp / text）</td></tr>
+            <tr><td>level</td><td>string</td><td>级别：info / success / warning / error</td></tr>
+            <tr><td>channel</td><td>string</td><td>直接指定目标渠道类型（需在令牌白名单内）</td></tr>
+            <tr><td>targets</td><td>string[]</td><td>指定目标渠道 id 或 <code>group:名称</code> 渠道组</td></tr>
+            <tr><td>tags</td><td>string[]</td><td>标签，路由规则可按标签匹配</td></tr>
+            <tr><td>url</td><td>string</td><td>关联链接（部分渠道支持点击跳转）</td></tr>
+            <tr><td>data</td><td>object</td><td>任意自定义数据，模板中用 <code>data.xxx</code> 引用</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- 各渠道配置教程 -->
+  <section class="section-block">
+    <div class="container">
+      <h2>各渠道配置教程</h2>
+      <div class="form-grid" style="grid-template-columns:1fr 1fr 1fr; gap:var(--sp-4);">
+        <div class="panel" style="margin:0;">
+          <h3>Bark</h3>
+          <ol class="steps" style="margin-top:var(--sp-3);">
+            <li>App Store 安装 Bark App。</li>
+            <li>打开 App，首页即显示你的「设备 Key」（8 位字符）。</li>
+            <li>后台添加渠道，类型选 <code>bark</code>，粘贴设备 Key。</li>
+            <li>如需自建服务器，填服务器地址（默认 <code>api.day.app</code>）。</li>
+          </ol>
+        </div>
+        <div class="panel" style="margin:0;">
+          <h3>Server酱</h3>
+          <ol class="steps" style="margin-top:var(--sp-3);">
+            <li>打开 sct.ftqq.com，用 GitHub 登录。</li>
+            <li>进入「SendKey」，复制形如 <code>sctpxxxxxxxxxx</code> 的 Key。</li>
+            <li>后台添加渠道，类型选 <code>serverchan</code>，粘贴 SendKey。</li>
+          </ol>
+        </div>
+        <div class="panel" style="margin:0;">
+          <h3>PushPlus</h3>
+          <ol class="steps" style="margin-top:var(--sp-3);">
+            <li>打开 pushplus.plus，微信扫码登录并关注公众号。</li>
+            <li>首页即显示你的 Token（<code>xxxxxxxxxxxxxxxx</code>）。</li>
+            <li>后台添加渠道，类型选 <code>pushplus</code>，粘贴 Token。</li>
+            <li>一对多推送可填「群组编码」。</li>
+          </ol>
+        </div>
+        <div class="panel" style="margin:0;">
+          <h3>企业微信机器人</h3>
+          <ol class="steps" style="margin-top:var(--sp-3);">
+            <li>企业微信群 → 右上角 … → 添加群机器人。</li>
+            <li>创建后复制 Webhook 地址，取 <code>key=</code> 后面的部分。</li>
+            <li>后台添加渠道，类型选 <code>wecom</code>，粘贴 Key。</li>
+          </ol>
+        </div>
+        <div class="panel" style="margin:0;">
+          <h3>钉钉机器人</h3>
+          <ol class="steps" style="margin-top:var(--sp-3);">
+            <li>钉钉群 → 群设置 → 智能群助手 → 添加机器人（自定义）。</li>
+            <li>复制 Webhook 地址，取 <code>access_token=</code> 后面部分。</li>
+            <li>安全设置建议选「加签」，复制 SEC 开头的密钥。</li>
+            <li>后台添加渠道，类型选 <code>dingtalk</code>，填入 Token 和密钥。</li>
+          </ol>
+        </div>
+        <div class="panel" style="margin:0;">
+          <h3>飞书机器人</h3>
+          <ol class="steps" style="margin-top:var(--sp-3);">
+            <li>飞书群 → 设置 → 群机器人 → 添加机器人（自定义）。</li>
+            <li>复制 Webhook 地址（<code>https://open.feishu.cn/open-apis/bot/v2/hook/xxx</code>）。</li>
+            <li>可开启「签名校验」获取密钥。</li>
+            <li>后台添加渠道，类型选 <code>feishu</code>，填入 Webhook 与密钥。</li>
+          </ol>
+        </div>
+        <div class="panel" style="margin:0;">
+          <h3>Telegram</h3>
+          <ol class="steps" style="margin-top:var(--sp-3);">
+            <li>在 Telegram 找 <code>@BotFather</code>，发 <code>/newbot</code> 创建机器人，得到 Token。</li>
+            <li>把你的机器人拉进目标群，或私聊它获取 Chat ID。</li>
+            <li>后台添加渠道，类型选 <code>telegram</code>，填入 Bot Token 与 Chat ID。</li>
+          </ol>
+        </div>
+        <div class="panel" style="margin:0;">
+          <h3>ntfy / Gotify</h3>
+          <ol class="steps" style="margin-top:var(--sp-3);">
+            <li>ntfy：用公共服务器 <code>ntfy.sh</code> 或自建，取一个 Topic 名。</li>
+            <li>Gotify：自建服务，创建 App 得到 Token。</li>
+            <li>后台添加渠道，类型选 <code>ntfy</code> / <code>gotify</code>。</li>
+          </ol>
+        </div>
+        <div class="panel" style="margin:0;">
+          <h3>Discord / Slack</h3>
+          <ol class="steps" style="margin-top:var(--sp-3);">
+            <li>Discord：频道设置 → 集成 → Webhook，复制 URL。</li>
+            <li>Slack：应用 → Incoming Webhooks，复制 URL。</li>
+            <li>后台添加渠道，类型选 <code>discord</code> / <code>slack</code>，粘贴 URL。</li>
+          </ol>
+        </div>
+        <div class="panel" style="margin:0;">
+          <h3>邮件（Resend）</h3>
+          <ol class="steps" style="margin-top:var(--sp-3);">
+            <li>注册 resend.com，建 API Key（<code>re_xxx</code>）。</li>
+            <li>配置发件域名并验证（免费档 3000 封/月）。</li>
+            <li>后台添加渠道，类型选 <code>resend</code>，填 API Key / 发件人 / 收件人。</li>
+          </ol>
+        </div>
+        <div class="panel" style="margin:0;">
+          <h3>通用自定义 Webhook</h3>
+          <ol class="steps" style="margin-top:var(--sp-3);">
+            <li>适用于任意支持 HTTP 调用的服务。</li>
+            <li>后台添加渠道，类型选 <code>custom</code>。</li>
+            <li>填写目标 URL、方法、请求头、Body 模板（支持 <code>{{title}}</code> 等占位符）。</li>
+            <li>注意：目标 URL 会被 SSRF 防护校验，内网地址将被拒绝。</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 调用示例 -->
+  <section class="section-block">
+    <div class="container">
+      <h2>调用示例</h2>
+      <p>把 <code>YOUR_TOKEN</code> 换成你后台生成的令牌。</p>
+
+      <h3>curl</h3>
+      <pre><code>curl -X POST https://你的域名/hook/YOUR_TOKEN \
+  -H "Content-Type: application/json" \
+  -d '{"title":"服务器报警","body":"磁盘 90%","level":"error","tags":["disk"]}'</code></pre>
+
+      <h3>JavaScript（fetch）</h3>
+      <pre><code>const res = await fetch('https://你的域名/hook/YOUR_TOKEN', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    title: '订单通知',
+    body: '新订单 #1024 已支付',
+    level: 'success',
+    data: { orderId: '1024' }
+  })
+});
+const data = await res.json();
+console.log(data.results); // [{channel, ok, status, error}]</code></pre>
+
+      <h3>Python（requests）</h3>
+      <pre><code>import requests
+
+resp = requests.post(
+    'https://你的域名/hook/YOUR_TOKEN',
+    json={
+        'title': '定时任务完成',
+        'body': '每日备份已执行完毕',
+        'level': 'info',
+        'tags': ['cron', 'backup'],
+    },
+    timeout=10,
+)
+print(resp.json())</code></pre>
+
+      <h3>浏览器直接打开（GET）</h3>
+      <pre><code>https://你的域名/hook/YOUR_TOKEN?title=标题&amp;body=正文内容&amp;level=warning</code></pre>
+    </div>
+  </section>
+
+  <!-- 常见问题 -->
+  <section class="section-block">
+    <div class="container-narrow">
+      <h2>常见问题</h2>
+
+      <h3>返回 401</h3>
+      <p>令牌不存在 / 已禁用 / 已过期；或开启了 <code>X-Signature</code> 签名校验但请求未带正确签名。检查令牌与签名配置。</p>
+
+      <h3>返回 429</h3>
+      <p>触发了限流：同一个令牌每分钟最多 60 次（内存滑动窗口，重启即清零）。间隔几秒再试即可。</p>
+
+      <h3>渠道没收到消息</h3>
+      <p>响应里的 <code>results</code> 数组会显示每个渠道的发送结果（<code>status</code> 与 <code>error</code>）。常见原因：Key 填错、渠道被禁用、令牌白名单未包含该渠道、钉钉/飞书签名密钥不匹配。</p>
+
+      <h3>请求超时</h3>
+      <p>渠道请求超时上限 8 秒，超时会在结果里显示「请求超时」。检查目标服务是否可达、Key 是否正确。HookHub 不会生成日志——请以同步返回的 <code>results</code> 为准。</p>
+
+      <h3>自定义 Webhook 被拒绝</h3>
+      <p>出于安全（SSRF 防护），目标 URL 只能是公网 http/https，内网 IP（127.x、10.x、172.16-31.x、192.168.x 等）会被拦截。</p>
+    </div>
+  </section>
+
+  <!-- 免费额度说明 -->
+  <section class="section-block">
+    <div class="container-narrow">
+      <h2>免费额度说明</h2>
+      <div class="callout callout-ok">
+        <strong>本服务设计为运行在 Cloudflare Free 计划额度内，正常使用不会产生任何费用。</strong>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>资源</th><th>免费额度</th><th>本项目用法</th></tr></thead>
+          <tbody>
+            <tr><td>Pages Functions 请求</td><td>100,000 / 天</td><td>每次 webhook 调用消耗 1 次</td></tr>
+            <tr><td>KV 写入</td><td>1,000 / 天</td><td>仅管理员保存配置时写入（webhook 请求不写 KV）</td></tr>
+            <tr><td>KV 读取</td><td>100,000 / 天</td><td>配置读取走内存缓存（60s TTL），大幅降低</td></tr>
+            <tr><td>KV 存储</td><td>1 GB</td><td>仅存配置 JSON，几十 KB</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="margin-top:var(--sp-4);">
+        关键点：HookHub <strong>不在 webhook 请求路径上写任何 KV</strong>——限流用进程内存、不记录日志、不统计用量，
+        所以 KV 写入量只取决于你手动改配置的次数，永远碰不到 1000/天 的红线。
+      </p>
+      <div class="callout callout-warn">
+        <strong>注意：Cloudflare Free 计划没有超额扣费机制</strong>——超出就是请求被拒（429 / 报错），不会产生账单。
+        只有把账户升级为 Workers <strong>Paid</strong> 之后才会按量计费。所以请<strong>保持账户在 Free 计划</strong>，切勿误升级。
+      </div>
+    </div>
+  </section>
+
+  <!-- 页脚 -->
+  <footer style="border-top:1px solid var(--border); padding:var(--sp-5) 0 var(--sp-7); color:var(--text-3); font-size:var(--fs-s);">
+    <div class="container">
+      HookHub · 部署于 Cloudflare Pages · 无日志设计：排障请以 webhook 同步返回的 results 为准 · 配置可导出备份
+    </div>
+  </footer>
+
+  <script src="/js/common.js"></script>
+  <script>
+    document.getElementById('adminLoginBtn').addEventListener('click', async () => {
+      const pwd = await HookHub.askPassword({ title: '管理员登录' });
+      if (pwd) {
+        HookHub.toast('登录成功，正在进入后台…', 'ok');
+        setTimeout(() => { window.location.href = '/admin/'; }, 400);
+      }
+    });
+  </script>
+</body>
+</html>

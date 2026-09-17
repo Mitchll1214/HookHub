@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360" role="img" aria-labelledby="title desc">
+  <!-- HookHub hero：一个 webhook 入口 → 并行分发到多个渠道 -->
+  <title id="title">HookHub — 一个 Webhook，多渠道送达</title>
+  <desc id="desc">左侧为统一的 /hook/:token 入口，右侧为并行分发到 Bark、企业微信、钉钉、飞书、Telegram、Server酱等渠道</desc>
+
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0b1220"/>
+      <stop offset="1" stop-color="#0e1626"/>
+    </linearGradient>
+    <linearGradient id="accentLine" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#f59e0b"/>
+      <stop offset="1" stop-color="#d97706"/>
+    </linearGradient>
+    <linearGradient id="cardTop" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#16283a"/>
+      <stop offset="1" stop-color="#101d2e"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 背景 -->
+  <rect width="1200" height="360" rx="24" fill="url(#bg)"/>
+
+  <!-- 顶部细 accent 线 -->
+  <rect x="0" y="0" width="1200" height="4" fill="url(#accentLine)"/>
+
+  <!-- 左侧：标题区 -->
+  <g transform="translate(64 44)">
+    <text x="0" y="30" font-family="-apple-system,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="20" font-weight="600" fill="#f59e0b" letter-spacing="2">CLOUDFLARE PAGES · FREE TIER</text>
+    <text x="0" y="92" font-family="-apple-system,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="56" font-weight="800" fill="#f8fafc">HookHub</text>
+    <text x="0" y="136" font-family="-apple-system,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="24" font-weight="500" fill="#94a3b8">一个 Webhook，多渠道送达</text>
+    <text x="0" y="182" font-family="-apple-system,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="18" fill="#64748b">一次调用，并行分发到 Bark / 企微 / 钉钉 / 飞书 / Telegram…</text>
+
+    <!-- 三个特性标签 -->
+    <g transform="translate(0 220)">
+      <rect x="0" y="0" width="150" height="34" rx="8" fill="#16283a" stroke="#243b52"/>
+      <text x="75" y="22" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="15" fill="#93c5fd">0 KV 写入</text>
+      <rect x="164" y="0" width="150" height="34" rx="8" fill="#16283a" stroke="#243b52"/>
+      <text x="239" y="22" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="15" fill="#93c5fd">免费额度内</text>
+      <rect x="328" y="0" width="166" height="34" rx="8" fill="#16283a" stroke="#243b52"/>
+      <text x="411" y="22" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="15" fill="#93c5fd">测试发送</text>
+    </g>
+  </g>
+
+  <!-- 右侧：分发示意 -->
+  <g transform="translate(520 40)">
+    <!-- 左侧：统一入口卡片 -->
+    <g transform="translate(0 120)">
+      <rect x="0" y="0" width="240" height="88" rx="14" fill="url(#cardTop)" stroke="#2c4a66"/>
+      <text x="22" y="34" font-family="ui-monospace,Menlo,monospace" font-size="17" fill="#fbbf24">POST /hook/:token</text>
+      <text x="22" y="60" font-family="ui-monospace,Menlo,monospace" font-size="13" fill="#64748b">{ title · body · level · tags · data }</text>
+    </g>
+
+    <!-- 连线 -->
+    <g stroke="#33506e" stroke-width="3" fill="none" stroke-linecap="round">
+      <path d="M 240 164 H 288"/>
+      <path d="M 288 164 C 288 70 340 70 340 40"/>
+      <path d="M 288 164 C 288 100 340 100 340 92"/>
+      <path d="M 288 164 C 288 130 340 130 340 144"/>
+      <path d="M 288 164 C 288 164 340 164 340 196"/>
+      <path d="M 288 164 C 288 200 340 200 340 248"/>
+      <path d="M 288 164 C 288 236 340 236 340 300"/>
+    </g>
+
+    <!-- 右侧：渠道卡片列 -->
+    <g transform="translate(352 0)">
+      <!-- Bark -->
+      <g transform="translate(0 0)">
+        <rect x="0" y="0" width="232" height="58" rx="12" fill="#142438" stroke="#2c4a66"/>
+        <circle cx="34" cy="29" r="14" fill="#f59e0b"/>
+        <text x="34" y="34" text-anchor="middle" font-family="-apple-system,Segoe UI,sans-serif" font-size="15" fill="#0b1220" font-weight="700">B</text>
+        <text x="60" y="26" font-family="-apple-system,Segoe UI,PingFang SC,sans-serif" font-size="15" fill="#e2e8f0">Bark</text>
+        <text x="60" y="44" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#475569">iOS 推送</text>
+      </g>
+      <!-- 企微 -->
+      <g transform="translate(0 82)">
+        <rect x="0" y="0" width="232" height="58" rx="12" fill="#142438" stroke="#2c4a66"/>
+        <circle cx="34" cy="29" r="14" fill="#22c55e"/>
+        <text x="34" y="34" text-anchor="middle" font-family="-apple-system,Segoe UI,sans-serif" font-size="15" fill="#0b1220" font-weight="700">企</text>
+        <text x="60" y="26" font-family="-apple-system,Segoe UI,PingFang SC,sans-serif" font-size="15" fill="#e2e8f0">企业微信</text>
+        <text x="60" y="44" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#475569">群机器人</text>
+      </g>
+      <!-- 钉钉 -->
+      <g transform="translate(0 164)">
+        <rect x="0" y="0" width="232" height="58" rx="12" fill="#142438" stroke="#2c4a66"/>
+        <circle cx="34" cy="29" r="14" fill="#3b82f6"/>
+        <text x="34" y="34" text-anchor="middle" font-family="-apple-system,Segoe UI,sans-serif" font-size="15" fill="#0b1220" font-weight="700">钉</text>
+        <text x="60" y="26" font-family="-apple-system,Segoe UI,PingFang SC,sans-serif" font-size="15" fill="#e2e8f0">钉钉</text>
+        <text x="60" y="44" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#475569">加签加密</text>
+      </g>
+      <!-- Telegram -->
+      <g transform="translate(0 246)">
+        <rect x="0" y="0" width="232" height="58" rx="12" fill="#142438" stroke="#2c4a66"/>
+        <circle cx="34" cy="29" r="14" fill="#22d3ee"/>
+        <text x="34" y="34" text-anchor="middle" font-family="-apple-system,Segoe UI,sans-serif" font-size="15" fill="#0b1220" font-weight="700">T</text>
+        <text x="60" y="26" font-family="-apple-system,Segoe UI,PingFang SC,sans-serif" font-size="15" fill="#e2e8f0">Telegram</text>
+        <text x="60" y="44" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#475569">Bot</text>
+      </g>
+      <!-- 更多 -->
+      <g transform="translate(0 328)">
+        <rect x="0" y="0" width="232" height="58" rx="12" fill="#142438" stroke="#2c4a66" stroke-dasharray="4 4"/>
+        <text x="116" y="34" text-anchor="middle" font-family="-apple-system,Segoe UI,PingFang SC,sans-serif" font-size="15" fill="#64748b">+ 飞书 / Server酱 / PushPlus / ntfy ···</text>
+      </g>
+    </g>
+  </g>
+</svg>

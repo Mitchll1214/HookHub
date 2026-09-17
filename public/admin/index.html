@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HookHub 管理后台</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%2320516e'/><text x='50' y='68' font-size='52' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'>H</text></svg>" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/">
+        <span class="brand-dot"></span> HookHub
+        <span class="brand-sub">管理后台</span>
+      </a>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span id="initBadge" class="badge badge-warn" style="display:none;">未初始化</span>
+        <button class="btn" id="logoutBtn">退出登录</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="sidebar-grid">
+      <!-- 侧边导航 -->
+      <nav class="side-nav" id="sideNav">
+        <a href="#overview" data-view="overview" class="active">总览</a>
+        <a href="#channels" data-view="channels">渠道管理</a>
+        <a href="#tokens" data-view="tokens">令牌管理</a>
+        <a href="#routes" data-view="routes">路由与分发</a>
+        <a href="#templates" data-view="templates">模板与映射</a>
+        <a href="#settings" data-view="settings">全局设置</a>
+      </nav>
+
+      <!-- 内容区 -->
+      <main id="mainContent">
+        <!-- 各视图由 app.js 渲染 -->
+      </main>
+    </div>
+  </div>
+
+  <!-- 视图 JS（零构建，按依赖顺序加载） -->
+  <script src="/js/common.js"></script>
+  <script src="/js/template.js"></script>
+  <script src="/js/views/channels.js"></script>
+  <script src="/js/views/tokens.js"></script>
+  <script src="/js/views/routes.js"></script>
+  <script src="/js/views/templates.js"></script>
+  <script src="/js/views/settings.js"></script>
+  <script src="/js/admin.js"></script>
+</body>
+</html>

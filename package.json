@@ -1,0 +1,15 @@
+{
+  "name": "hookhub",
+  "version": "1.0.0",
+  "description": "HookHub - 通用 Webhook 多渠道分发服务（Cloudflare Pages + KV）",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler pages dev public --kv=KV_CONFIG",
+    "deploy": "wrangler pages deploy public",
+    "test": "node --test test/*.test.js"
+  },
+  "devDependencies": {
+    "wrangler": "^3.90.0"
+  }
+}

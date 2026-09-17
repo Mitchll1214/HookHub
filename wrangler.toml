@@ -1,0 +1,27 @@
+# HookHub — Cloudflare Pages 项目配置
+name = "hookhub"
+compatibility_date = "2024-11-01"
+pages_build_output_dir = "public"
+
+# ============================================================
+# KV 绑定（通过 Pages 控制台配置，不要在 wrangler.toml 里写 id）
+#
+# Pages 项目的 KV 绑定请到控制台设置：
+#   Settings → Functions → KV namespace bindings → Add binding
+#     Variable name: KV_CONFIG          (必须完全一致，代码硬编码读取 env.KV_CONFIG)
+#     KV namespace : 你创建的命名空间（Production / Preview 各添加一次）
+#
+# 本地开发时用命令行参数模拟 KV：
+#   npx wrangler pages dev public --kv=KV_CONFIG
+#
+# 如果确实要用 wrangler 部署（非 Git 集成），可取消下面注释并填入真实 ID：
+# [[kv_namespaces]]
+# binding = "KV_CONFIG"
+# id = "换成真实生产环境命名空间 ID"
+# preview_id = "换成真实预览环境命名空间 ID"
+# ============================================================
+
+# ================= 环境变量（Secret，在 Pages 控制台配置）=================
+# 不要把这些写进 wrangler.toml！在 Pages 项目 Settings → Environment variables 里以加密方式添加：
+#   ADMIN_PASSWORD  管理员密码（必填，缺失时所有 /api/* 管理接口都会拒绝访问）
+#   SIGN_SECRET     HMAC 签名密钥（可选，用于启用 /hook/:token 的 X-Signature 校验）
