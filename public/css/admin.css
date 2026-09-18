@@ -30,13 +30,19 @@ body.admin {
   --code-bg: #0d1522;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 8px 32px rgba(0, 0, 0, 0.45);
+}
 
+/* 背景同时铺到 html 与 body，保证内容短时整页仍是深色主题，
+   不出现「上深下白」的半屏割裂。不用 fixed —— 移动端不生效且耗性能。 */
+html:has(body.admin),
+body.admin {
   background:
     radial-gradient(1100px 460px at 88% -12%, rgba(245, 158, 11, 0.05), transparent 60%),
     radial-gradient(900px 420px at 0% 0%, rgba(37, 99, 235, 0.09), transparent 55%),
     var(--bg);
-  background-attachment: fixed;
+  background-attachment: scroll;
   color: var(--text);
+  min-height: 100vh;
 }
 
 /* 顶栏 */

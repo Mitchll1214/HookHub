@@ -35,14 +35,20 @@ body.landing {
   --code-bg: #0d1522;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 8px 32px rgba(0, 0, 0, 0.45);
+}
 
-  /* 首页整体背景：深蓝夜空 + 极微妙的径向光（非紫渐变） */
+/* 首页整体背景：深蓝夜空 + 极微妙的径向光（非紫渐变）。
+   同时铺到 html 与 body，内容短时整页保持深色，不出现「上深下白」；
+   不用 fixed（移动端不生效且耗性能）。 */
+html:has(body.landing),
+body.landing {
   background:
     radial-gradient(1200px 500px at 85% -10%, rgba(245, 158, 11, 0.06), transparent 60%),
     radial-gradient(900px 420px at 0% 0%, rgba(37, 99, 235, 0.10), transparent 55%),
     var(--bg);
-  background-attachment: fixed;
+  background-attachment: scroll;
   color: var(--text);
+  min-height: 100vh;
 }
 
 /* 链接与内联 code 的深色适配 */
