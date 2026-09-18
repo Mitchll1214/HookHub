@@ -64,13 +64,16 @@ Content-Type: application/json
 {
   "title": "服务器报警",
   "body": "磁盘使用率超过 90%，请及时处理。",
-  "level": "error",            // info | success | warning | error
-  "channel": "bark",           // 可选：指定单个渠道
-  "targets": ["group:oncall"], // 可选：指定目标渠道/组（限制在令牌白名单内）
-  "tags": ["disk", "prod"],    // 可选：用于路由匹配
-  "url": "https://...",        // 可选：关联链接
-  "data": { "host": "web-01" } // 可选：任意自定义数据，模板/路由中可用 data.xxx
+  "level": "error",
+  "channel": "bark",
+  "targets": ["group:oncall"],
+  "tags": ["disk", "prod"],
+  "url": "https://example.com/ops/disk",
+  "data": { "host": "web-01" }
 }</code></pre>
+      <div class="callout callout-warn" style="margin-top:var(--sp-3);">
+        ⚠️ <strong>JSON 不允许注释</strong>——示例中的字段含义请以下方表格为准，发送时请勿在 JSON 里写 <code>//</code> 或 <code>#</code> 注释，否则请求会被拒绝（返回 400）。
+      </div>
       <h3>字段说明</h3>
       <div class="table-wrap">
         <table class="kv-table">

@@ -21,6 +21,32 @@ function normalizeLevel(level) {
   return 'info';
 }
 
+// 把合法 JSON 对象映射进标准 payload（JSON body / data 字段共用）
+function applyJsonPayload(payload, obj) {
+  if (isPlainObject(obj)) {
+    payload.title = str(obj.title ?? payload.title);
+    payload.body = str(obj.body ?? obj.desp ?? obj.text ?? obj.content ?? payload.body);
+    payload.level = normalizeLevel(str(obj.level ?? payload.level));
+    payload.channel = str(obj.channel ?? payload.channel);
+    const tg = obj.targets ?? obj.target;
+    if (tg != null) payload.targets = (Array.isArray(tg) ? tg : String(tg).split(','))
+      .map((s) => str(s).trim()).filter(Boolean);
+    const tg2 = obj.tags;
+    if (tg2 != null) payload.tags = (Array.isArray(tg2) ? tg2 : String(tg2).split(','))
+      .map((s) => str(s).trim()).filter(Boolean);
+    payload.url = str(obj.url ?? payload.url);
+    if (isPlainObject(obj.data)) payload.data = obj.data;
+    else if (obj.data != null) payload.data = { raw: obj.data };
+    return { ok: true, payload };
+  }
+  if (typeof obj === 'string') {
+    payload.body = payload.body || obj;
+    return { ok: true, payload };
+  }
+  // 合法 JSON 但不是对象/字符串（如数组、数字）——视为错误避免误分发
+  return { ok: false, error: 'JSON body 必须是对象（含 title/body/level 等字段）' };
+}
+
 /**
  * 归一化入站数据（GET query / JSON / text / form）。
  * @returns {{ok:true, payload} | {ok:false, error}}
@@ -65,32 +91,31 @@ export function normalizeInput(searchParams, bodyText, contentType) {
   const hasBody = bodyText != null && bodyText.length > 0;
 
   if (hasBody) {
-    if (ct.includes('application/json') || (ct.includes('application/x-www-form-urlencoded') === false && ct.startsWith('text/plain') === false)) {
-      // 默认按 JSON 尝试
+    const declaredJson = ct.includes('application/json');
+    const declaredForm = ct.includes('application/x-www-form-urlencoded');
+    const declaredText = ct.startsWith('text/plain');
+    // 明确声明 JSON：解析失败直接报错，绝不静默降级为纯文本
+    const isJsonAttempt = declaredJson || (!declaredForm && !declaredText);
+    if (isJsonAttempt) {
+      if (declaredJson) {
+        try {
+          const obj = JSON.parse(bodyText);
+          return applyJsonPayload(payload, obj);
+        } catch {
+          return {
+            ok: false,
+            error: '请求体 Content-Type 为 application/json，但不是合法 JSON。注意：JSON 不支持 // 注释。请移除注释后重试。',
+          };
+        }
+      }
+      // 未明确声明类型：尝试 JSON，失败时降级为纯文本（兼容 text/plain 用户）
       try {
         const obj = JSON.parse(bodyText);
-        if (isPlainObject(obj)) {
-          payload.title = str(obj.title ?? payload.title);
-          payload.body = str(obj.body ?? obj.desp ?? obj.text ?? obj.content ?? payload.body);
-          payload.level = normalizeLevel(str(obj.level ?? payload.level));
-          payload.channel = str(obj.channel ?? payload.channel);
-          const tg = obj.targets ?? obj.target;
-          if (tg != null) payload.targets = (Array.isArray(tg) ? tg : String(tg).split(','))
-            .map((s) => str(s).trim()).filter(Boolean);
-          const tg2 = obj.tags;
-          if (tg2 != null) payload.tags = (Array.isArray(tg2) ? tg2 : String(tg2).split(','))
-            .map((s) => str(s).trim()).filter(Boolean);
-          payload.url = str(obj.url ?? payload.url);
-          if (isPlainObject(obj.data)) payload.data = obj.data;
-          else if (obj.data != null) payload.data = { raw: obj.data };
-        } else if (typeof obj === 'string') {
-          payload.body = payload.body || obj;
-        }
+        return applyJsonPayload(payload, obj);
       } catch {
-        // 解析失败按纯文本处理
         payload.body = payload.body || bodyText;
       }
-    } else if (ct.includes('application/x-www-form-urlencoded')) {
+    } else if (declaredForm) {
       const q = new URLSearchParams(bodyText);
       const g = (k) => q.get(k) ?? '';
       payload.title = payload.title || str(g('title'));
