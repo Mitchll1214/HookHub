@@ -1,0 +1,341 @@
+/* ============================================================
+   HookHub 首页视觉层（高级感）
+   
+   作用域：body.landing（仅 public/index.html 使用）
+   与 style.css 的关系：本文件在 style.css 之后加载，
+   body.landing 重新定义同名 CSS 变量，让共享类（panel/table/
+   callout/steps 等）在首页自动深色化；admin 页面不引用本文件，
+   不受任何影响。
+
+   设计语言：沿用 assets/readme/hero.svg —— 深蓝夜空底 + 琥珀强调
+   + 蓝灰细节 + mono 技术标签。克制的 hairline 分隔，无紫渐变、
+   无卡片套卡片、无假浏览器 chrome（代码块只做 typographic frame）。
+   ============================================================ */
+
+/* ---------- 变量覆盖（仅首页作用域） ---------- */
+body.landing {
+  --bg: #0b1220;
+  --surface: #101d2e;
+  --surface-2: #142438;
+  --border: #1e3145;
+  --border-strong: #2c4a66;
+  --text: #e8eef5;
+  --text-2: #9fb0c0;
+  --text-3: #5d7286;
+  --primary: #93c5fd;
+  --primary-weak: #10283c;
+  --accent: #f59e0b;
+  --accent-weak: #2a2008;
+  --ok: #34d399;
+  --ok-weak: #0d2a22;
+  --warn: #fbbf24;
+  --warn-weak: #2a2008;
+  --err: #f87171;
+  --err-weak: #2d1312;
+  --code-bg: #0d1522;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 8px 32px rgba(0, 0, 0, 0.45);
+
+  /* 首页整体背景：深蓝夜空 + 极微妙的径向光（非紫渐变） */
+  background:
+    radial-gradient(1200px 500px at 85% -10%, rgba(245, 158, 11, 0.06), transparent 60%),
+    radial-gradient(900px 420px at 0% 0%, rgba(37, 99, 235, 0.10), transparent 55%),
+    var(--bg);
+  background-attachment: fixed;
+  color: var(--text);
+}
+
+/* 链接与内联 code 的深色适配 */
+body.landing a { color: var(--primary); }
+body.landing code {
+  background: var(--code-bg);
+  border-color: var(--border);
+  color: #bcd4ee;
+}
+body.landing pre {
+  background: var(--code-bg);
+  border-color: var(--border);
+  color: #cdd9e6;
+}
+body.landing pre code { color: inherit; }
+
+/* ---------- 顶栏 ---------- */
+body.landing .topbar {
+  background: rgba(11, 18, 32, 0.72);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border-bottom-color: var(--border);
+}
+body.landing .brand { color: var(--text); }
+body.landing .brand-sub { color: var(--text-3); }
+body.landing .brand-dot {
+  background: var(--accent);
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.55);
+}
+
+/* 登录按钮：hairline 描边 + hover 琥珀填充（克制） */
+body.landing .topbar .btn-primary {
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 6px 18px;
+  font-weight: 500;
+  transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
+}
+body.landing .topbar .btn-primary:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #0b1220;
+}
+
+/* ---------- Hero ---------- */
+body.landing .hero {
+  padding: var(--sp-7) 0 var(--sp-6);
+  border-bottom: 1px solid var(--border);
+}
+body.landing .hero h1 {
+  font-size: clamp(30px, 5.2vw, 46px);
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  font-weight: 750;
+  color: var(--text);
+}
+body.landing .hero p {
+  color: var(--text-2);
+  font-size: var(--fs-l);
+  max-width: 560px;
+}
+body.landing .hero-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: var(--sp-7);
+  align-items: center;
+}
+
+/* 第一屏右侧：真实调用代码卡（typographic frame，无假浏览器 chrome） */
+.hero-code {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+.hero-code .hero-code-label {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-3);
+  letter-spacing: 0.04em;
+}
+.hero-code pre {
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  padding: 18px 20px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  overflow-x: auto;
+}
+.hero-code .hl-k { color: #7dd3fc; }   /* 键 */
+.hero-code .hl-v { color: #fcd34d; }   /* 字符串值 */
+.hero-code .hl-c { color: #5d7286; }   /* 注释 */
+
+/* 分发流向条（保留原 flow 文案，深色 chip 化） */
+body.landing .flow { margin: var(--sp-6) 0 0; gap: var(--sp-2); }
+body.landing .flow .node {
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  color: var(--text-2);
+  border-radius: 999px;
+  padding: 5px 14px;
+  font-size: var(--fs-s);
+}
+body.landing .flow .node.accent {
+  background: var(--accent-weak);
+  border-color: rgba(245, 158, 11, 0.35);
+  color: var(--accent);
+}
+body.landing .flow .arrow { color: var(--text-3); }
+
+/* ---------- 区块 ---------- */
+body.landing .section-block { border-top-color: var(--border); padding: var(--sp-7) 0; }
+body.landing .section-block h2 {
+  font-size: var(--fs-2xl);
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+
+/* 小节 kicker（保留原有文本分组的层级感，非装饰编号） */
+.sec-kicker {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 8px;
+}
+
+/* ---------- 三步上手 ---------- */
+body.landing .steps { margin: var(--sp-5) 0 0; }
+body.landing .steps li {
+  border-left: 1px solid var(--border);
+  padding: 0 0 var(--sp-5) var(--sp-6);
+  position: relative;
+}
+body.landing .steps li:last-child { border-left-color: transparent; padding-bottom: 0; }
+body.landing .steps li::before {
+  content: counter(step, decimal-leading-zero);
+  position: absolute;
+  left: -17px;
+  top: 2px;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 6px var(--bg);
+}
+body.landing .steps li strong { color: var(--text); }
+
+/* ---------- 表格（字段说明 / 免费额度） ---------- */
+body.landing .table-wrap {
+  border-color: var(--border);
+  background: var(--surface);
+  border-radius: 10px;
+}
+body.landing table { background: transparent; }
+body.landing th {
+  background: var(--surface-2);
+  color: var(--text-2);
+  border-bottom-color: var(--border);
+}
+body.landing td {
+  border-bottom-color: var(--border);
+  color: var(--text-2);
+}
+body.landing tbody tr:hover { background: var(--surface-2); }
+body.landing .kv-table td:first-child { color: #bcd4ee; }
+
+/* ---------- callout ---------- */
+body.landing .callout {
+  background: var(--surface);
+  border-color: var(--border);
+  border-left-color: var(--primary);
+}
+body.landing .callout-warn {
+  background: var(--warn-weak);
+  border-left-color: var(--warn);
+  border-color: rgba(251, 191, 36, 0.28);
+  color: #f5deb3;
+}
+body.landing .callout-ok {
+  background: var(--ok-weak);
+  border-left-color: var(--ok);
+  border-color: rgba(52, 211, 153, 0.26);
+  color: #c7f5e4;
+}
+body.landing .callout strong { color: var(--text); }
+
+/* ---------- 渠道墙（details 收纳教程，取代卡片套卡片） ---------- */
+.chan-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: var(--sp-5); }
+.chan-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  transition: border-color 0.18s ease, background 0.18s ease;
+}
+.chan-item:hover { border-color: var(--border-strong); background: var(--surface-2); }
+.chan-item summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  user-select: none;
+}
+.chan-item summary::-webkit-details-marker { display: none; }
+.chan-item .chan-name { font-weight: 650; color: var(--text); font-size: var(--fs-m); }
+.chan-item .chan-id {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-3);
+  padding: 1px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.chan-item .chan-chev {
+  margin-left: auto;
+  color: var(--text-3);
+  font-family: var(--mono);
+  font-size: 14px;
+  transition: transform 0.2s ease;
+}
+.chan-item[open] .chan-chev { transform: rotate(90deg); }
+.chan-item .chan-body {
+  border-top: 1px solid var(--border);
+  padding: 14px 16px 6px;
+}
+.chan-item .chan-body .steps { margin: 0; }
+.chan-item .chan-body .steps li {
+  border-left: none;
+  padding: 0 0 10px 0;
+}
+.chan-item .chan-body .steps li::before { display: none; }
+body.landing .chan-item .chan-body .steps li::before { display: none; }
+.chan-item .chan-body .steps li { list-style: disc inside; font-size: var(--fs-s); color: var(--text-2); }
+
+/* ---------- 调用示例 / 代码块 ---------- */
+.code-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: var(--sp-5); }
+.code-cell { background: var(--code-bg); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.code-cell .code-cell-label {
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-3);
+}
+.code-cell pre { margin: 0; border: none; border-radius: 0; background: transparent; font-size: 12.5px; }
+.code-cell.wide { grid-column: 1 / -1; }
+
+/* ---------- FAQ ---------- */
+body.landing .faq h3 {
+  border-top: 1px solid var(--border);
+  padding-top: var(--sp-5);
+  margin-top: var(--sp-5);
+  font-size: var(--fs-l);
+}
+body.landing .faq h3:first-child { border-top: none; padding-top: 0; margin-top: 0; }
+
+/* ---------- Footer ---------- */
+body.landing .landing-footer {
+  border-top: 1px solid var(--border);
+  padding: var(--sp-5) 0 var(--sp-7);
+  color: var(--text-3);
+  font-size: var(--fs-s);
+}
+
+/* ---------- 响应式：320 / 375 / 414 / 768 ---------- */
+@media (max-width: 860px) {
+  body.landing .hero-inner { grid-template-columns: 1fr; gap: var(--sp-5); }
+  .chan-grid { grid-template-columns: 1fr; }
+  .code-grid { grid-template-columns: 1fr; }
+  .code-cell.wide { grid-column: auto; }
+  body.landing .hero { padding: var(--sp-6) 0 var(--sp-5); }
+}
+@media (max-width: 420px) {
+  body.landing .hero h1 { font-size: 28px; }
+  body.landing .brand-sub { display: none; }
+  .chan-item .chan-id { display: none; }
+}

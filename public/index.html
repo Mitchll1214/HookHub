@@ -7,8 +7,9 @@
   <meta name="description" content="HookHub：把通用 Webhook 请求转发到 Bark / Server酱 / PushPlus / 企业微信 / 钉钉 / 飞书 / Telegram / ntfy 等渠道的免费开源服务。" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%2320516e'/><text x='50' y='68' font-size='52' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'>H</text></svg>" />
   <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/landing.css" />
 </head>
-<body>
+<body class="landing">
 
   <!-- 顶部栏 -->
   <header class="topbar">
@@ -21,22 +22,38 @@
     </div>
   </header>
 
-  <!-- Hero -->
+  <!-- Hero：左文案 + 右真实调用代码卡 -->
   <section class="hero">
     <div class="container">
-      <h1>一个 Webhook 地址，<br />同时送达你的所有通知渠道</h1>
-      <p class="lead">调用一次通用格式的 HTTP 请求，HookHub 按你配置的规则，把消息并行分发到 Bark、Server酱、PushPlus、企业微信、钉钉、飞书、Telegram、ntfy 等渠道。</p>
-      <div class="flow">
-        <span class="node">你的服务 / 脚本 / 监控</span>
-        <span class="arrow">→</span>
-        <span class="node accent">HookHub Webhook</span>
-        <span class="arrow">→</span>
-        <span class="node">Bark</span>
-        <span class="node">Server酱</span>
-        <span class="node">企微</span>
-        <span class="node">钉钉</span>
-        <span class="node">飞书</span>
-        <span class="node">…</span>
+      <div class="hero-inner">
+        <div>
+          <h1>一个 Webhook 地址，<br />同时送达你的所有通知渠道</h1>
+          <p class="lead">调用一次通用格式的 HTTP 请求，HookHub 按你配置的规则，把消息并行分发到 Bark、Server酱、PushPlus、企业微信、钉钉、飞书、Telegram、ntfy 等渠道。</p>
+          <div class="flow">
+            <span class="node">你的服务 / 脚本 / 监控</span>
+            <span class="arrow">→</span>
+            <span class="node accent">HookHub</span>
+            <span class="arrow">→</span>
+            <span class="node">Bark</span>
+            <span class="node">企微</span>
+            <span class="node">钉钉</span>
+            <span class="node">飞书</span>
+            <span class="node">…</span>
+          </div>
+        </div>
+        <div class="hero-code" aria-label="调用 HookHub webhook 的 JSON 示例">
+          <div class="hero-code-label">POST /hook/YOUR_TOKEN</div>
+          <pre><code><span class="hl-c">// 一次调用，多渠道并行送达</span>
+{
+  <span class="hl-k">"title"</span>: <span class="hl-v">"服务器报警"</span>,
+  <span class="hl-k">"body"</span>: <span class="hl-v">"磁盘使用率超过 90%，请及时处理。"</span>,
+  <span class="hl-k">"level"</span>: <span class="hl-v">"error"</span>,
+  <span class="hl-k">"channel"</span>: <span class="hl-v">"bark"</span>,
+  <span class="hl-k">"targets"</span>: [<span class="hl-v">"group:oncall"</span>],
+  <span class="hl-k">"tags"</span>: [<span class="hl-v">"disk"</span>, <span class="hl-v">"prod"</span>],
+  <span class="hl-k">"data"</span>: { <span class="hl-k">"host"</span>: <span class="hl-v">"web-01"</span> }
+}</code></pre>
+        </div>
       </div>
     </div>
   </section>
@@ -44,6 +61,7 @@
   <!-- 三步上手 -->
   <section class="section-block">
     <div class="container-narrow">
+      <p class="sec-kicker">How it works</p>
       <h2>三步上手</h2>
       <ol class="steps">
         <li><strong>登录后台</strong> — 点击右上角「管理员登录」，输入部署时配置的 <code>ADMIN_PASSWORD</code>。</li>
@@ -56,6 +74,7 @@
   <!-- 请求格式 -->
   <section class="section-block">
     <div class="container-narrow">
+      <p class="sec-kicker">Request format</p>
       <h2>通用请求格式</h2>
       <p>POST 一个 JSON 到你的 Webhook 地址（也兼容 <code>GET</code>、<code>表单</code>、<code>纯文本</code>）：</p>
       <pre><code>POST /hook/YOUR_TOKEN
@@ -93,104 +112,117 @@ Content-Type: application/json
     </div>
   </section>
 
-  <!-- 各渠道配置教程 -->
+  <!-- 各渠道配置教程：渠道墙（details 收纳，替代卡片套卡片） -->
   <section class="section-block">
     <div class="container">
+      <p class="sec-kicker">Channels</p>
       <h2>各渠道配置教程</h2>
-      <div class="form-grid" style="grid-template-columns:1fr 1fr 1fr; gap:var(--sp-4);">
-        <div class="panel" style="margin:0;">
-          <h3>Bark</h3>
-          <ol class="steps" style="margin-top:var(--sp-3);">
+      <div class="chan-grid">
+
+        <details class="chan-item">
+          <summary><span class="chan-name">Bark</span><span class="chan-id">bark</span><span class="chan-chev">›</span></summary>
+          <div class="chan-body"><ol class="steps">
             <li>App Store 安装 Bark App。</li>
             <li>打开 App，首页即显示你的「设备 Key」（8 位字符）。</li>
             <li>后台添加渠道，类型选 <code>bark</code>，粘贴设备 Key。</li>
             <li>如需自建服务器，填服务器地址（默认 <code>api.day.app</code>）。</li>
-          </ol>
-        </div>
-        <div class="panel" style="margin:0;">
-          <h3>Server酱</h3>
-          <ol class="steps" style="margin-top:var(--sp-3);">
+          </ol></div>
+        </details>
+
+        <details class="chan-item">
+          <summary><span class="chan-name">Server酱</span><span class="chan-id">serverchan</span><span class="chan-chev">›</span></summary>
+          <div class="chan-body"><ol class="steps">
             <li>打开 sct.ftqq.com，用 GitHub 登录。</li>
             <li>进入「SendKey」，复制形如 <code>sctpxxxxxxxxxx</code> 的 Key。</li>
             <li>后台添加渠道，类型选 <code>serverchan</code>，粘贴 SendKey。</li>
-          </ol>
-        </div>
-        <div class="panel" style="margin:0;">
-          <h3>PushPlus</h3>
-          <ol class="steps" style="margin-top:var(--sp-3);">
+          </ol></div>
+        </details>
+
+        <details class="chan-item">
+          <summary><span class="chan-name">PushPlus</span><span class="chan-id">pushplus</span><span class="chan-chev">›</span></summary>
+          <div class="chan-body"><ol class="steps">
             <li>打开 pushplus.plus，微信扫码登录并关注公众号。</li>
             <li>首页即显示你的 Token（<code>xxxxxxxxxxxxxxxx</code>）。</li>
             <li>后台添加渠道，类型选 <code>pushplus</code>，粘贴 Token。</li>
             <li>一对多推送可填「群组编码」。</li>
-          </ol>
-        </div>
-        <div class="panel" style="margin:0;">
-          <h3>企业微信机器人</h3>
-          <ol class="steps" style="margin-top:var(--sp-3);">
+          </ol></div>
+        </details>
+
+        <details class="chan-item">
+          <summary><span class="chan-name">企业微信机器人</span><span class="chan-id">wecom</span><span class="chan-chev">›</span></summary>
+          <div class="chan-body"><ol class="steps">
             <li>企业微信群 → 右上角 … → 添加群机器人。</li>
             <li>创建后复制 Webhook 地址，取 <code>key=</code> 后面的部分。</li>
             <li>后台添加渠道，类型选 <code>wecom</code>，粘贴 Key。</li>
-          </ol>
-        </div>
-        <div class="panel" style="margin:0;">
-          <h3>钉钉机器人</h3>
-          <ol class="steps" style="margin-top:var(--sp-3);">
+          </ol></div>
+        </details>
+
+        <details class="chan-item">
+          <summary><span class="chan-name">钉钉机器人</span><span class="chan-id">dingtalk</span><span class="chan-chev">›</span></summary>
+          <div class="chan-body"><ol class="steps">
             <li>钉钉群 → 群设置 → 智能群助手 → 添加机器人（自定义）。</li>
             <li>复制 Webhook 地址，取 <code>access_token=</code> 后面部分。</li>
             <li>安全设置建议选「加签」，复制 SEC 开头的密钥。</li>
             <li>后台添加渠道，类型选 <code>dingtalk</code>，填入 Token 和密钥。</li>
-          </ol>
-        </div>
-        <div class="panel" style="margin:0;">
-          <h3>飞书机器人</h3>
-          <ol class="steps" style="margin-top:var(--sp-3);">
+          </ol></div>
+        </details>
+
+        <details class="chan-item">
+          <summary><span class="chan-name">飞书机器人</span><span class="chan-id">feishu</span><span class="chan-chev">›</span></summary>
+          <div class="chan-body"><ol class="steps">
             <li>飞书群 → 设置 → 群机器人 → 添加机器人（自定义）。</li>
             <li>复制 Webhook 地址（<code>https://open.feishu.cn/open-apis/bot/v2/hook/xxx</code>）。</li>
             <li>可开启「签名校验」获取密钥。</li>
             <li>后台添加渠道，类型选 <code>feishu</code>，填入 Webhook 与密钥。</li>
-          </ol>
-        </div>
-        <div class="panel" style="margin:0;">
-          <h3>Telegram</h3>
-          <ol class="steps" style="margin-top:var(--sp-3);">
+          </ol></div>
+        </details>
+
+        <details class="chan-item">
+          <summary><span class="chan-name">Telegram</span><span class="chan-id">telegram</span><span class="chan-chev">›</span></summary>
+          <div class="chan-body"><ol class="steps">
             <li>在 Telegram 找 <code>@BotFather</code>，发 <code>/newbot</code> 创建机器人，得到 Token。</li>
             <li>把你的机器人拉进目标群，或私聊它获取 Chat ID。</li>
             <li>后台添加渠道，类型选 <code>telegram</code>，填入 Bot Token 与 Chat ID。</li>
-          </ol>
-        </div>
-        <div class="panel" style="margin:0;">
-          <h3>ntfy / Gotify</h3>
-          <ol class="steps" style="margin-top:var(--sp-3);">
+          </ol></div>
+        </details>
+
+        <details class="chan-item">
+          <summary><span class="chan-name">ntfy / Gotify</span><span class="chan-id">ntfy · gotify</span><span class="chan-chev">›</span></summary>
+          <div class="chan-body"><ol class="steps">
             <li>ntfy：用公共服务器 <code>ntfy.sh</code> 或自建，取一个 Topic 名。</li>
             <li>Gotify：自建服务，创建 App 得到 Token。</li>
             <li>后台添加渠道，类型选 <code>ntfy</code> / <code>gotify</code>。</li>
-          </ol>
-        </div>
-        <div class="panel" style="margin:0;">
-          <h3>Discord / Slack</h3>
-          <ol class="steps" style="margin-top:var(--sp-3);">
+          </ol></div>
+        </details>
+
+        <details class="chan-item">
+          <summary><span class="chan-name">Discord / Slack</span><span class="chan-id">discord · slack</span><span class="chan-chev">›</span></summary>
+          <div class="chan-body"><ol class="steps">
             <li>Discord：频道设置 → 集成 → Webhook，复制 URL。</li>
             <li>Slack：应用 → Incoming Webhooks，复制 URL。</li>
             <li>后台添加渠道，类型选 <code>discord</code> / <code>slack</code>，粘贴 URL。</li>
-          </ol>
-        </div>
-        <div class="panel" style="margin:0;">
-          <h3>邮件（Resend）</h3>
-          <ol class="steps" style="margin-top:var(--sp-3);">
+          </ol></div>
+        </details>
+
+        <details class="chan-item">
+          <summary><span class="chan-name">邮件（Resend）</span><span class="chan-id">resend</span><span class="chan-chev">›</span></summary>
+          <div class="chan-body"><ol class="steps">
             <li>注册 resend.com，建 API Key（<code>re_xxx</code>）。</li>
             <li>配置发件域名并验证（免费档 3000 封/月）。</li>
             <li>后台添加渠道，类型选 <code>resend</code>，填 API Key / 发件人 / 收件人。</li>
-          </ol>
-        </div>
-        <div class="panel" style="margin:0;">
-          <h3>通用自定义 Webhook</h3>
-          <ol class="steps" style="margin-top:var(--sp-3);">
+          </ol></div>
+        </details>
+
+        <details class="chan-item">
+          <summary><span class="chan-name">通用自定义 Webhook</span><span class="chan-id">custom</span><span class="chan-chev">›</span></summary>
+          <div class="chan-body"><ol class="steps">
             <li>适用于任意支持 HTTP 调用的服务。</li>
             <li>后台添加渠道，类型选 <code>custom</code>。</li>
             <li>填写目标 URL、方法、请求头、Body 模板（支持 <code>{{title}}</code> 等占位符）。</li>
             <li>注意：目标 URL 会被 SSRF 防护校验，内网地址将被拒绝。</li>
-          </ol>
-        </div>
+          </ol></div>
+        </details>
+
       </div>
     </div>
   </section>
@@ -198,16 +230,21 @@ Content-Type: application/json
   <!-- 调用示例 -->
   <section class="section-block">
     <div class="container">
+      <p class="sec-kicker">Examples</p>
       <h2>调用示例</h2>
       <p>把 <code>YOUR_TOKEN</code> 换成你后台生成的令牌。</p>
 
-      <h3>curl</h3>
-      <pre><code>curl -X POST https://你的域名/hook/YOUR_TOKEN \
+      <div class="code-grid">
+        <div class="code-cell">
+          <div class="code-cell-label">curl</div>
+          <pre><code>curl -X POST https://你的域名/hook/YOUR_TOKEN \
   -H "Content-Type: application/json" \
   -d '{"title":"服务器报警","body":"磁盘 90%","level":"error","tags":["disk"]}'</code></pre>
+        </div>
 
-      <h3>JavaScript（fetch）</h3>
-      <pre><code>const res = await fetch('https://你的域名/hook/YOUR_TOKEN', {
+        <div class="code-cell">
+          <div class="code-cell-label">JavaScript · fetch</div>
+          <pre><code>const res = await fetch('https://你的域名/hook/YOUR_TOKEN', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
@@ -219,9 +256,11 @@ Content-Type: application/json
 });
 const data = await res.json();
 console.log(data.results); // [{channel, ok, status, error}]</code></pre>
+        </div>
 
-      <h3>Python（requests）</h3>
-      <pre><code>import requests
+        <div class="code-cell">
+          <div class="code-cell-label">Python · requests</div>
+          <pre><code>import requests
 
 resp = requests.post(
     'https://你的域名/hook/YOUR_TOKEN',
@@ -234,15 +273,20 @@ resp = requests.post(
     timeout=10,
 )
 print(resp.json())</code></pre>
+        </div>
 
-      <h3>浏览器直接打开（GET）</h3>
-      <pre><code>https://你的域名/hook/YOUR_TOKEN?title=标题&amp;body=正文内容&amp;level=warning</code></pre>
+        <div class="code-cell">
+          <div class="code-cell-label">浏览器直接打开 · GET</div>
+          <pre><code>https://你的域名/hook/YOUR_TOKEN?title=标题&amp;body=正文内容&amp;level=warning</code></pre>
+        </div>
+      </div>
     </div>
   </section>
 
   <!-- 常见问题 -->
   <section class="section-block">
-    <div class="container-narrow">
+    <div class="container-narrow faq">
+      <p class="sec-kicker">FAQ</p>
       <h2>常见问题</h2>
 
       <h3>返回 401</h3>
@@ -265,6 +309,7 @@ print(resp.json())</code></pre>
   <!-- 免费额度说明 -->
   <section class="section-block">
     <div class="container-narrow">
+      <p class="sec-kicker">Free tier</p>
       <h2>免费额度说明</h2>
       <div class="callout callout-ok">
         <strong>本服务设计为运行在 Cloudflare Free 计划额度内，正常使用不会产生任何费用。</strong>
@@ -292,7 +337,7 @@ print(resp.json())</code></pre>
   </section>
 
   <!-- 页脚 -->
-  <footer style="border-top:1px solid var(--border); padding:var(--sp-5) 0 var(--sp-7); color:var(--text-3); font-size:var(--fs-s);">
+  <footer class="landing-footer">
     <div class="container">
       HookHub · 部署于 Cloudflare Pages · 无日志设计：排障请以 webhook 同步返回的 results 为准 · 配置可导出备份
     </div>
