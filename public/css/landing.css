@@ -39,8 +39,9 @@ body.landing {
 
 /* 首页整体背景：深蓝夜空 + 极微妙的径向光（非紫渐变）。
    同时铺到 html 与 body，内容短时整页保持深色，不出现「上深下白」；
-   不用 fixed（移动端不生效且耗性能）。 */
-html:has(body.landing),
+   不用 fixed（移动端不生效且耗性能）。
+   用 html.landing-page 类而非 :has()（部分手机浏览器不支持 :has）。 */
+html.landing-page,
 body.landing {
   background:
     radial-gradient(1200px 500px at 85% -10%, rgba(245, 158, 11, 0.06), transparent 60%),
@@ -49,6 +50,13 @@ body.landing {
   background-attachment: scroll;
   color: var(--text);
   min-height: 100vh;
+}
+
+/* 横向溢出防线：内容超出视口时裁剪而非整页滚动（右侧不会再露出浅色底）。
+   用 clip 而非 hidden —— clip 不破坏 sticky/fixed 定位。 */
+html.landing-page,
+html.landing-page body {
+  overflow-x: clip;
 }
 
 /* 链接与内联 code 的深色适配 */
