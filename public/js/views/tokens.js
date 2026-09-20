@@ -104,9 +104,9 @@
 
         // 令牌地址 + 复制按钮
         const tdTok = H.el('td');
-        const tokWrap = H.el('div', { style: 'display:flex;gap:6px;align-items:center;' });
+        const tokWrap = H.el('div', { style: 'display:flex;gap:6px;align-items:center;width:100%;' });
         const inp = H.el('input', {
-          type: 'text', readonly: '', value: base, class: 'mono', style: 'font-size:var(--fs-xs);width:280px;',
+          type: 'text', readonly: '', value: base, class: 'mono', style: 'font-size:var(--fs-xs);flex:1;min-width:0;width:auto;',
         });
         const copyBtn = H.el('button', { class: 'btn btn-sm', text: '复制' });
         tokWrap.appendChild(inp);
@@ -248,9 +248,9 @@
     const base = `${location.origin}/hook/${tk.token}`;
     const content = H.el('div');
     content.appendChild(H.el('p', { text: '新令牌已创建，请立即复制保存（此后不再显示完整值）：' }));
-    const box = H.el('div', { style: 'display:flex;gap:6px;align-items:center;' });
-    const inp = H.el('input', { type: 'text', readonly: '', value: base, class: 'mono' });
-    const copy = H.el('button', { class: 'btn btn-primary', text: '复制' });
+    const box = H.el('div', { style: 'display:flex;gap:6px;align-items:center;width:100%;min-width:0;' });
+    const inp = H.el('input', { type: 'text', readonly: '', value: base, class: 'mono', style: 'flex:1;min-width:0;width:auto;font-size:var(--fs-xs);' });
+    const copy = H.el('button', { class: 'btn btn-primary', style: 'white-space:nowrap;', text: '复制' });
     box.appendChild(inp);
     box.appendChild(copy);
     content.appendChild(box);

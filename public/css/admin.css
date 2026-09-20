@@ -109,7 +109,16 @@ body.admin .empty { color: var(--text-3); }
 body.admin .panel-head { border-bottom: 1px solid var(--border); padding-bottom: var(--sp-3); margin-bottom: var(--sp-4); }
 
 /* 表格 */
-body.admin .table-wrap { border-color: var(--border); background: var(--surface); border-radius: 10px; overflow: hidden; }
+body.admin .table-wrap {
+  border-color: var(--border);
+  background: var(--surface);
+  border-radius: 10px;
+  /* 恢复横向滚动：宽表格（令牌/渠道/路由）在容器内滑动，不撑破页面。
+     页面级 overflow-x: clip 只在 html/body 上，与容器滚动不冲突。 */
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+}
 body.admin table { background: transparent; }
 body.admin th { background: var(--surface-2); color: var(--text-2); border-bottom-color: var(--border); }
 body.admin td { border-bottom-color: var(--border); color: var(--text-2); }
@@ -209,10 +218,22 @@ body.admin .tab.active { color: var(--primary); border-bottom-color: var(--prima
     padding-bottom: var(--sp-3);
     display: flex;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
     gap: 4px;
   }
   body.admin .side-nav a { white-space: nowrap; padding: 7px 12px; }
+  /* JS 内联的 4 列 grid（级别映射等）在手机端降为 2 列，不再撑破视口 */
+  body.admin .form-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  /* 面板与 modal 内容不超出视口 */
+  body.admin .panel,
+  body.admin .modal { max-width: 100%; }
+  /* 表格内长文本容器：留给 .table-wrap 横向滚动，不再撑破外层 */
+  body.admin .table-wrap { max-width: 100%; }
 }
 @media (max-width: 420px) {
   body.admin .brand-sub { display: none; }
+  /* 极窄屏：级别映射等 4 列 grid 直接单列，操作按钮保持单行 */
+  body.admin .form-grid { grid-template-columns: 1fr !important; }
+  body.admin .modal-mask { padding: 12px; }
+  body.admin .modal { padding: var(--sp-4); }
 }
