@@ -315,7 +315,9 @@ td.actions .btn { margin-left: 6px; }
 .kv-table td:last-child { color: var(--text-2); font-size: var(--fs-s); }
 
 /* ---------- 管理后台 ---------- */
-.sidebar-grid { display: grid; grid-template-columns: 220px 1fr; gap: var(--sp-5); padding: var(--sp-5) 0; }
+.sidebar-grid { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: var(--sp-5); padding: var(--sp-5) 0; }
+.sidebar-grid > * { min-width: 0; }
+#mainContent { min-width: 0; }
 .side-nav { border-right: 1px solid var(--border); padding-right: var(--sp-4); }
 .side-nav a {
   display: block; padding: 8px 12px; border-radius: var(--radius-sm);
@@ -386,4 +388,10 @@ td.actions .btn { margin-left: 6px; }
   .hero h1 { font-size: 26px; }
   .container { padding: 0 var(--sp-4); }
   .topbar-inner { padding: 0 var(--sp-4); }
+
+  /* 宽表格：按内容宽度展开（而非压缩换行），溢出 .table-wrap 后横向滑动查看
+     —— 移动端查看渠道/令牌/路由等全部列信息的关键 */
+  .table-wrap { max-width: 100%; -webkit-overflow-scrolling: touch; }
+  .table-wrap > table { width: max-content; min-width: 100%; }
+  .side-nav { -webkit-overflow-scrolling: touch; }
 }
