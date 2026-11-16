@@ -3,17 +3,7 @@
 import { withAdmin } from '../_lib.js';
 import { json } from '../../_lib/http.js';
 import { KV_KEYS, randomToken } from '../../_lib/core.js';
-
-function serializeToken(t) {
-  return {
-    token: t.token,
-    name: t.name || '',
-    enabled: t.enabled !== false,
-    allowedChannels: (t.allowedChannels || []).map((c) => (c.startsWith('channel:') ? c.slice(8) : c)),
-    createdAt: t.createdAt,
-    expiresAt: t.expiresAt || null,
-  };
-}
+import { serializeToken } from '../_serialize.js';
 
 // GET 列表 + POST 生成
 export const onRequest = (context) =>

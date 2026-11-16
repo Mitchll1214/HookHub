@@ -3,19 +3,7 @@
 import { withAdmin } from '../_lib.js';
 import { json } from '../../_lib/http.js';
 import { KV_KEYS } from '../../_lib/core.js';
-
-function serializeRoute(r) {
-  return {
-    id: r.id,
-    name: r.name || '未命名路由',
-    enabled: r.enabled !== false,
-    when: r.when || {},
-    targets: r.targets || [],
-    parallel: r.parallel !== false,
-    failover: r.failover || [],
-    priority: r.priority || 0,
-  };
-}
+import { serializeRoute } from '../_serialize.js';
 
 export const onRequestPut = (context) =>
   withAdmin(context, async ({ store, cors }) => {

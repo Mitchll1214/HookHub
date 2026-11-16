@@ -18,19 +18,6 @@ import { json, corsHeaders } from '../_lib/http.js';
 export async function withAdmin(context, handler, { adminOnly = true, requireStore = true } = {}) {
   const { request, env } = context;
 
-  // OPTIONS 预检统一放行（CORS 由响应头控制）
-  if (request.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 204,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Password, Authorization, X-Signature, X-Timestamp',
-        'Access-Control-Max-Age': '86400',
-      },
-    });
-  }
-
   // KV 绑定检测：缺失时按 requireStore 决定直接报错还是降级放行
   const adminPassword = env.ADMIN_PASSWORD || '';
   let store = null;
@@ -53,9 +40,16 @@ export async function withAdmin(context, handler, { adminOnly = true, requireSto
   }
   // KV 不可用时 settings 用默认值，避免后续代码拿不到 settings 崩溃
   const settings = kvOk ? await getSettings(store) : {};
+
+  // CORS 必须按设置计算：白名单模式下预检也不能回 *，否则浏览器会误判后真实请求被拒
   const ch = corsHeaders(settings, request);
   if (ch === null) {
     return json({ ok: false, error: '来源不在 CORS 白名单' }, 403);
+  }
+
+  // OPTIONS 预检：放行，响应头沿用上面的 CORS 结果
+  if (request.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: ch });
   }
 
   let isAdmin = false;

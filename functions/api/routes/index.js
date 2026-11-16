@@ -3,33 +3,21 @@
 import { withAdmin } from '../_lib.js';
 import { json } from '../../_lib/http.js';
 import { KV_KEYS, randomId } from '../../_lib/core.js';
-
-function serializeRoute(r) {
-  return {
-    id: r.id,
-    name: r.name || '未命名路由',
-    enabled: r.enabled !== false,
-    when: r.when || {},
-    targets: r.targets || [],
-    parallel: r.parallel !== false,
-    failover: r.failover || [],
-    priority: r.priority || 0,
-  };
-}
+import { serializeRoute, byCreatedAtAsc } from '../_serialize.js';
 
 export const onRequest = (context) =>
   withAdmin(context, async ({ store, cors }) => {
     const method = context.request.method;
 
     if (method === 'GET') {
+      // listKeys('route:') 不会带出 routes:index，无需额外过滤
       const keys = await store.listKeys('route:');
       const routes = [];
       for (const k of keys) {
-        if (k === KV_KEYS.routesIndex) continue;
         const r = await store.get(k);
         if (r) routes.push(serializeRoute(r));
       }
-      routes.sort((a, b) => (b.priority || 0) - (a.priority || 0) || (a.createdAt || '').localeCompare(b.createdAt || ''));
+      routes.sort((a, b) => (b.priority || 0) - (a.priority || 0) || byCreatedAtAsc(a, b));
       return json({ ok: true, routes }, 200, cors);
     }
 

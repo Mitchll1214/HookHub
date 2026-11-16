@@ -3,14 +3,7 @@
 import { withAdmin } from '../_lib.js';
 import { json } from '../../_lib/http.js';
 import { KV_KEYS } from '../../_lib/core.js';
-
-function serializeGroup(g) {
-  return {
-    name: g.name,
-    channels: (g.channels || []).map((c) => (c.startsWith('channel:') ? c.slice(8) : c)),
-    enabled: g.enabled !== false,
-  };
-}
+import { serializeGroup } from '../_serialize.js';
 
 export const onRequestPut = (context) =>
   withAdmin(context, async ({ store, cors }) => {

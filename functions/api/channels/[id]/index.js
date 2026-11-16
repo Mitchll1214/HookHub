@@ -3,39 +3,8 @@
 
 import { withAdmin } from '../../_lib.js';
 import { json } from '../../../_lib/http.js';
-import { getChannel, maskSecret, KV_KEYS } from '../../../_lib/core.js';
-import { registry } from '../../../_adapters/index.js';
-
-function serializeChannel(ch, { full = false } = {}) {
-  const out = {
-    id: ch.id,
-    name: ch.name,
-    type: ch.type,
-    enabled: ch.enabled !== false,
-    createdAt: ch.createdAt,
-    updatedAt: ch.updatedAt,
-    levelMap: ch.levelMap || {},
-    template: ch.template || null,
-  };
-  if (full) {
-    out.config = ch.config || {};
-    out.mapping = ch.mapping || {};
-  } else {
-    const cfg = ch.config || {};
-    const meta = registry[ch.type];
-    const masked = {};
-    if (meta) {
-      for (const f of meta.fields) {
-        const v = cfg[f.key];
-        if (v != null && v !== '') {
-          masked[f.key] = /key|token|secret|password|sendkey|api/i.test(f.key) ? maskSecret(String(v)) : v;
-        }
-      }
-    }
-    out.configMasked = masked;
-  }
-  return out;
-}
+import { getChannel, KV_KEYS } from '../../../_lib/core.js';
+import { serializeChannel } from '../../_serialize.js';
 
 // GET /api/channels/:id —— 单个渠道完整详情（含密钥，仅管理端）
 export const onRequestGet = (context) =>

@@ -6,7 +6,7 @@ const WINDOW_MS = 60 * 1000;
 // 过期清理间隔：Map 涨得慢，定期清理即可
 const CLEANUP_INTERVAL_MS = 5 * 60 * 1000;
 
-// 全局兜底：单 isolate 总请求保护
+// 按 key 分桶的滑动窗口计数
 // key -> { timestamps: number[] }
 const buckets = new Map();
 

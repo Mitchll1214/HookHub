@@ -5,13 +5,14 @@
 import { withAdmin } from '../../_lib.js';
 import { json } from '../../../_lib/http.js';
 import { getChannel } from '../../../_lib/core.js';
-import { registry } from '../../../_adapters/index.js';
+import { registry, dispatchChannel } from '../../../_adapters/index.js';
 
 export const onRequestPost = (context) =>
   withAdmin(context, async ({ store, cors, settings }) => {
     const id = context.params.id;
     const ch = await getChannel(store, id);
     if (!ch) return json({ ok: false, error: '渠道不存在' }, 404, cors);
+    if (!registry[ch.type]) return json({ ok: false, error: `未知渠道类型: ${ch.type}` }, 400, cors);
 
     const mock = {
       title: 'HookHub 测试消息',
@@ -23,9 +24,8 @@ export const onRequestPost = (context) =>
       url: '',
       data: { test: true, from: 'HookHub' },
     };
-    const adapter = registry[ch.type];
-    if (!adapter) return json({ ok: false, error: `未知渠道类型: ${ch.type}` }, 400, cors);
-    const result = await adapter.send(ch, mock, {
+    // 走统一分发入口：测试发送也会应用渠道级模板，与真实分发结果一致
+    const result = await dispatchChannel(ch, mock, {
       timeoutMs: settings.timeoutMs || 8000,
       retries: settings.retries != null ? settings.retries : 2,
     });
@@ -33,6 +33,6 @@ export const onRequestPost = (context) =>
       ok: result.ok,
       status: result.status,
       error: result.error || '',
-      raw: result.body || '',
+      raw: result.raw || '',
     }, result.ok ? 200 : 502, cors);
   });

@@ -3,221 +3,257 @@
 
 (function () {
   const H = window.HookHub;
-  let currentBox = null;
+
+  // 分区：标题 + 说明 + 内容（替代 panel 套 panel）
+  function section(title, desc, children) {
+    const box = H.el('div', { class: 'form-section' });
+    if (title) box.appendChild(H.el('h4', { text: title }));
+    if (desc) box.appendChild(H.el('p', { class: 'field-hint', text: desc }));
+    for (const c of [].concat(children || [])) if (c) box.appendChild(c);
+    return box;
+  }
+
+  // 复选框行（标签 + 说明）
+  function checkRow(input, label, hint) {
+    const wrap = H.el('div', { class: 'field', style: 'margin-bottom:0;' });
+    const lab = H.el('label', { class: 'check-item', style: 'padding:4px 0;' });
+    lab.appendChild(input);
+    lab.appendChild(H.el('span', { text: label }));
+    wrap.appendChild(lab);
+    if (hint) wrap.appendChild(H.el('p', { class: 'field-hint', style: 'margin:2px 0 0 23px;', text: hint }));
+    return wrap;
+  }
 
   async function renderSettings(box) {
     currentBox = box;
     box.innerHTML = '';
 
-    const [settingsData, chData, groupsData] = await Promise.all([
+    const [settingsData, chData, groupsData, tokData] = await Promise.all([
       H.api('/api/settings'),
       H.api('/api/channels'),
-      H.api('/api/groups'),
+      H.api('/api/groups').catch(() => ({ groups: [] })),
+      H.api('/api/tokens').catch(() => ({ tokens: [] })),
     ]);
     const settings = settingsData.settings || {};
     const channels = chData.channels || [];
     const groups = groupsData.groups || [];
+    const tokens = tokData.tokens || [];
+
+    box.appendChild(H.pageHead({
+      kicker: 'Settings',
+      title: '全局设置',
+      desc: '兜底渠道、超时重试、CORS 与签名校验；以及配置的备份与恢复。',
+    }));
 
     // ---- 初始化状态 ----
-    const initPanel = H.el('div', { class: 'panel' });
-    const initHead = H.el('div', { class: 'panel-head' });
-    initHead.appendChild(H.el('h2', { class: 'panel-title', text: '全局设置' }));
-    initPanel.appendChild(initHead);
-
     const initialized = !!settings.createdAt;
     if (!initialized) {
       const warn = H.el('div', { class: 'callout callout-warn' });
       warn.appendChild(H.el('strong', { text: '系统尚未初始化。' }));
-      warn.appendChild(document.createTextNode(' 点击下方按钮写入默认配置（只消耗 1 次 KV 写入）。'));
-      initPanel.appendChild(warn);
-      const initBtn = H.el('button', { class: 'btn btn-accent', text: '初始化系统' });
-      initPanel.appendChild(initBtn);
+      warn.appendChild(document.createTextNode(' 点击右侧按钮写入默认配置（只消耗 1 次 KV 写入），并创建示例路由。'));
+      const initBtn = H.el('button', { class: 'btn btn-sm btn-accent', text: '初始化系统', style: 'margin-left:var(--sp-3);' });
+      warn.appendChild(initBtn);
+      box.appendChild(warn);
+
       initBtn.addEventListener('click', async () => {
+        initBtn.disabled = true;
+        initBtn.textContent = '初始化中…';
         try {
-          const data = await H.api('/api/settings', { method: 'POST', body: { settings: {} } });
+          await H.api('/api/settings', { method: 'POST', body: { settings: {} } });
           H.toast('系统已初始化，默认路由已创建', 'ok');
-          // 同步顶部「未初始化」徽章状态（隐藏 + 更新全局标记）
+          H.state.initialized = true;
+          // 顶栏徽章由 [hidden] 控制显隐，避免 style.display 与 CSS 打架
           const badge = document.getElementById('initBadge');
-          if (badge) { badge.style.display = 'none'; badge.textContent = ''; }
-          window.__hookhubInitialized = true;
+          if (badge) badge.hidden = true;
           renderSettings(box);
-        } catch (e) { H.toast(e.message, 'err'); }
+        } catch (e) {
+          H.toast(e.message, 'err');
+          initBtn.disabled = false;
+          initBtn.textContent = '初始化系统';
+        }
       });
     } else {
-      initPanel.appendChild(H.el('p', {
-        class: 'field-hint', text: `已初始化 · schemaVersion ${settings.schemaVersion || 1} · 创建于 ${H.fmtTime(settings.createdAt)}`,
-      }));
+      const meta = H.el('div', { class: 'callout callout-ok', style: 'margin-bottom:var(--sp-4);' });
+      meta.appendChild(H.el('strong', { text: '系统已初始化' }));
+      meta.appendChild(document.createTextNode(
+        ` · schemaVersion ${settings.schemaVersion || 1} · 创建于 ${H.fmtTime(settings.createdAt)}`
+      ));
+      box.appendChild(meta);
     }
-    box.appendChild(initPanel);
 
-    const wrap = H.el('div', { class: 'panel' });
-    const head = H.el('div', { class: 'panel-head' });
-    const titleBox = H.el('div');
-    titleBox.appendChild(H.el('h2', { class: 'panel-title', text: '默认兜底与限流' }));
-    head.appendChild(titleBox);
-    wrap.appendChild(head);
+    // ---- 默认兜底渠道与限流 ----
+    const main = H.el('div', { class: 'panel' });
 
-    // ---- 默认兜底渠道 ----
-    const defRow = H.el('div', { class: 'field' });
-    defRow.appendChild(H.el('label', { text: '默认兜底渠道（未匹配任何路由时发送到）' }));
-    defRow.appendChild(H.el('p', {
-      class: 'field-hint', style: 'margin-bottom:var(--sp-2);',
-      text: '可多选渠道与渠道组。留空 = 未匹配路由的消息不发送。',
+    const defField = H.el('div', { class: 'field' });
+    defField.appendChild(H.el('label', { text: '默认兜底渠道' }));
+    defField.appendChild(H.el('p', {
+      class: 'field-hint', style: 'margin:0 0 var(--sp-2);',
+      text: '未匹配任何路由时发送到这里。可多选渠道与渠道组；留空 = 未匹配路由的消息不发送。',
     }));
-    const defBox = H.el('div', { style: 'display:flex;flex-wrap:wrap;gap:8px;max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:10px;' });
-    const defSelected = (settings.defaultChannels || []).map((c) => (c.startsWith('channel:') ? c : `channel:${c}`));
+    const defList = H.el('div', { class: 'check-list', style: 'max-height:240px;' });
+    const defSelected = (settings.defaultChannels || []).map((c) => (c.startsWith('channel:') || c.startsWith('group:') ? c : `channel:${c}`));
+    if (!channels.length && !groups.length) {
+      defList.appendChild(H.el('p', { class: 'field-hint', text: '还没有渠道或渠道组，请先在「渠道管理」添加。' }));
+    }
     for (const ch of channels) {
-      const lab = H.el('label', { style: 'display:flex;align-items:center;gap:6px;font-weight:400;font-size:var(--fs-s);cursor:pointer;width:48%;' });
-      const cb = H.el('input', { type: 'checkbox', value: `channel:${ch.id}`, 'data-def': '1' });
+      const lab = H.el('label', { class: 'check-item' });
+      const cb = H.el('input', { type: 'checkbox', value: `channel:${ch.id}` });
       if (defSelected.includes(`channel:${ch.id}`)) cb.checked = true;
       lab.appendChild(cb);
-      lab.appendChild(document.createTextNode(`${ch.name || ch.type}`));
-      defBox.appendChild(lab);
+      lab.appendChild(H.el('span', { text: ch.name || ch.type }));
+      if (ch.enabled === false) lab.appendChild(H.el('span', { class: 'badge badge-off', text: '停用' }));
+      defList.appendChild(lab);
     }
     for (const g of groups) {
-      const lab = H.el('label', { style: 'display:flex;align-items:center;gap:6px;font-weight:400;font-size:var(--fs-s);cursor:pointer;width:48%;' });
-      const cb = H.el('input', { type: 'checkbox', value: `group:${g.name}`, 'data-def': '1' });
+      const lab = H.el('label', { class: 'check-item' });
+      const cb = H.el('input', { type: 'checkbox', value: `group:${g.name}` });
       if (defSelected.includes(`group:${g.name}`)) cb.checked = true;
       lab.appendChild(cb);
-      lab.appendChild(document.createTextNode(`组: ${g.name}`));
-      defBox.appendChild(lab);
+      lab.appendChild(H.el('span', { text: `组：${g.name}`, style: 'font-family:var(--mono);' }));
+      if (g.enabled === false) lab.appendChild(H.el('span', { class: 'badge badge-off', text: '停用' }));
+      defList.appendChild(lab);
     }
-    defRow.appendChild(defBox);
-    wrap.appendChild(defRow);
+    defField.appendChild(defList);
+    main.appendChild(section('兜底与分发', null, [defField]));
 
     // ---- 超时与重试 ----
-    const grid = H.el('div', { class: 'form-grid' });
-    const tRow = H.el('div', { class: 'field' });
-    tRow.appendChild(H.el('label', { text: '渠道请求超时（毫秒）' }));
-    tRow.appendChild(H.el('input', { type: 'number', id: 'st-timeout', value: settings.timeoutMs || 8000, min: 1000, max: 30000, step: 500 }));
-    grid.appendChild(tRow);
-    const rRow = H.el('div', { class: 'field' });
-    rRow.appendChild(H.el('label', { text: '重试次数（不含首次）' }));
-    rRow.appendChild(H.el('input', { type: 'number', id: 'st-retries', value: settings.retries != null ? settings.retries : 2, min: 0, max: 5 }));
-    grid.appendChild(rRow);
-    wrap.appendChild(grid);
+    const tField = H.el('div', { class: 'field', style: 'margin:0;' });
+    tField.appendChild(H.el('label', { text: '渠道请求超时（毫秒）' }));
+    const tInput = H.el('input', {
+      type: 'number', value: settings.timeoutMs || 8000, min: 1000, max: 30000, step: 500,
+    });
+    tField.appendChild(tInput);
+    const rField = H.el('div', { class: 'field', style: 'margin:0;' });
+    rField.appendChild(H.el('label', { text: '重试次数（不含首次）' }));
+    const rInput = H.el('input', {
+      type: 'number', value: settings.retries != null ? settings.retries : 2, min: 0, max: 5,
+    });
+    rField.appendChild(rInput);
+    main.appendChild(section('请求策略', null, [H.el('div', { class: 'form-grid' }, [tField, rField])]));
 
     // ---- CORS ----
-    const corsPanel = H.el('div', { class: 'panel', style: 'margin-top:var(--sp-4);' });
-    corsPanel.appendChild(H.el('h3', { class: 'panel-title', text: 'CORS', style: 'font-size:var(--fs-l);' }));
-    const corsAllowAll = H.el('div', { class: 'field' });
-    const labAll = H.el('label', { style: 'display:flex;align-items:center;gap:6px;font-weight:400;' });
-    const cbAll = H.el('input', { type: 'checkbox', id: 'st-cors-all' });
-    if (settings.cors && settings.cors.allowAll !== false) cbAll.checked = true;
-    labAll.appendChild(cbAll);
-    labAll.appendChild(document.createTextNode('允许所有来源（默认）'));
-    corsAllowAll.appendChild(labAll);
-    corsPanel.appendChild(corsAllowAll);
+    const cbAll = H.el('input', { type: 'checkbox' });
+    if (!settings.cors || settings.cors.allowAll !== false) cbAll.checked = true;
+    const allowAllRow = checkRow(cbAll, '允许所有来源（默认）');
 
-    const corsList = H.el('div', { class: 'field' });
-    corsList.appendChild(H.el('label', { text: '白名单来源（逗号分隔，取消上方勾选后生效）' }));
-    corsList.appendChild(H.el('input', {
-      type: 'text', id: 'st-cors-origins', class: 'mono',
+    const originsField = H.el('div', { class: 'field', style: 'margin:var(--sp-3) 0 0;' });
+    originsField.appendChild(H.el('label', { text: '白名单来源（逗号分隔，取消上方勾选后生效）' }));
+    const originsInput = H.el('input', {
+      type: 'text', class: 'mono',
       value: ((settings.cors && settings.cors.origins) || []).join(', '),
       placeholder: 'https://admin.example.com, https://app.example.com',
-    }));
-    corsPanel.appendChild(corsList);
-    wrap.appendChild(corsPanel);
+    });
+    originsField.appendChild(originsInput);
+    // 允许所有来源时白名单不生效，但保持可编辑：允许先填好再取消勾选
+
+    main.appendChild(section('CORS', '浏览器端跨域调用 /hook 时的来源放行规则。', [allowAllRow, originsField]));
 
     // ---- 签名 ----
-    const sigPanel = H.el('div', { class: 'panel', style: 'margin-top:var(--sp-4);' });
-    sigPanel.appendChild(H.el('h3', { class: 'panel-title', text: '请求签名校验', style: 'font-size:var(--fs-l);' }));
-    sigPanel.appendChild(H.el('p', {
-      class: 'field-hint',
-      text: '开启后，调用 /hook/令牌 必须携带 X-Signature 与 X-Timestamp 头。需要先在 Cloudflare 配置 SIGN_SECRET 环境变量。',
-    }));
-    const sigRow = H.el('div', { class: 'field' });
-    const labSig = H.el('label', { style: 'display:flex;align-items:center;gap:6px;font-weight:400;' });
-    const cbSig = H.el('input', { type: 'checkbox', id: 'st-sig-enabled' });
+    const cbSig = H.el('input', { type: 'checkbox' });
     if (settings.signature && settings.signature.enabled) cbSig.checked = true;
-    labSig.appendChild(cbSig);
-    labSig.appendChild(document.createTextNode('启用 X-Signature HMAC 校验'));
-    sigRow.appendChild(labSig);
-    sigPanel.appendChild(sigRow);
-    wrap.appendChild(sigPanel);
+    main.appendChild(section(
+      '请求签名校验',
+      '开启后调用 /hook/令牌 必须携带 X-Signature 与 X-Timestamp 头。需先在 Cloudflare 配置 SIGN_SECRET 环境变量。',
+      [checkRow(cbSig, '启用 X-Signature HMAC 校验')]
+    ));
 
-    // 保存
-    const saveBtn = H.el('button', { class: 'btn btn-primary', text: '保存全局设置', style: 'margin-top:var(--sp-4);' });
-    wrap.appendChild(saveBtn);
+    // ---- 保存 ----
+    const saveBtn = H.el('button', {
+      class: 'btn btn-primary', type: 'button', text: '保存全局设置',
+      style: 'margin-top:var(--sp-4);',
+    });
+    main.appendChild(saveBtn);
     saveBtn.addEventListener('click', async () => {
       const body = {
-        timeoutMs: Number(document.getElementById('st-timeout').value) || 8000,
-        retries: Number(document.getElementById('st-retries').value) || 0,
-        defaultChannels: Array.from(defBox.querySelectorAll('input[type=checkbox]:checked')).map((c) => c.value),
+        timeoutMs: Number(tInput.value) || 8000,
+        retries: Number(rInput.value) || 0,
+        defaultChannels: Array.from(defList.querySelectorAll('input[type=checkbox]:checked')).map((c) => c.value),
         cors: {
-          allowAll: document.getElementById('st-cors-all').checked,
-          origins: document.getElementById('st-cors-origins').value.split(',').map((s) => s.trim()).filter(Boolean),
+          allowAll: cbAll.checked,
+          origins: originsInput.value.split(',').map((s) => s.trim()).filter(Boolean),
         },
-        signature: {
-          enabled: document.getElementById('st-sig-enabled').checked,
-        },
+        signature: { enabled: cbSig.checked },
       };
       saveBtn.disabled = true;
+      const label = saveBtn.textContent;
+      saveBtn.textContent = '保存中…';
       try {
         await H.api('/api/settings', { method: 'PUT', body });
         H.toast('全局设置已保存', 'ok');
-      } catch (e) { H.toast(e.message, 'err'); }
-      saveBtn.disabled = false;
+      } catch (e) {
+        H.toast(e.message, 'err');
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = label;
+      }
     });
-    box.appendChild(wrap);
+    box.appendChild(main);
+
+    // ---- Webhook 地址（取第一个启用令牌） ----
+    const first = tokens.find((t) => t.enabled !== false) || tokens[0];
+    if (first) {
+      const card = H.el('div', { class: 'panel' });
+      const head = H.el('div', { class: 'panel-head' });
+      head.appendChild(H.el('h2', { class: 'panel-title', text: 'Webhook 地址' }));
+      head.appendChild(H.el('span', { class: 'panel-desc', text: `${first.name || '未命名'} · 调用入口` }));
+      card.appendChild(head);
+
+      const url = `${location.origin}/hook/${first.token}`;
+      const row = H.el('div', { class: 'copy-row' });
+      const inp = H.el('input', { type: 'text', readonly: '', value: url, class: 'mono', 'aria-label': 'Webhook 地址' });
+      const copyBtn = H.el('button', { class: 'btn btn-sm', type: 'button', text: '复制' });
+      row.appendChild(inp);
+      row.appendChild(copyBtn);
+      card.appendChild(row);
+      copyBtn.addEventListener('click', () => H.copyText(url, inp));
+
+      card.appendChild(H.el('p', { class: 'field-hint', style: 'margin:var(--sp-3) 0 4px;', text: 'curl 示例' }));
+      card.appendChild(H.el('pre', {
+        style: 'margin:0;',
+        text: `curl -X POST ${url} \\\n  -H "Content-Type: application/json" \\\n  -d '{"title":"Hello","body":"World","level":"info"}'`,
+      }));
+      box.appendChild(card);
+    }
 
     // ---- 备份与恢复 ----
-    const bakPanel = H.el('div', { class: 'panel' });
-    bakPanel.appendChild(H.el('h2', { class: 'panel-title', text: '备份与恢复' }));
-    bakPanel.appendChild(H.el('p', {
-      class: 'field-hint', text: '导出全部配置为 JSON 文件（不消耗 KV 写）；导入时一次性批量写入。',
+    const bak = H.el('div', { class: 'panel' });
+    const bakHead = H.el('div', { class: 'panel-head' });
+    const bakTitle = H.el('div');
+    bakTitle.appendChild(H.el('h2', { class: 'panel-title', text: '备份与恢复' }));
+    bakTitle.appendChild(H.el('p', {
+      class: 'panel-desc', text: '导出全部配置为 JSON（不消耗 KV 写）；导入时一次性批量写入。',
     }));
+    bakHead.appendChild(bakTitle);
+    bak.appendChild(bakHead);
 
-    const btnExport = H.el('button', { class: 'btn', text: '导出全部配置' });
-    const btnImport = H.el('button', { class: 'btn', text: '导入 JSON 恢复' });
-    const btnCopy = H.el('button', { class: 'btn btn-sm btn-ghost', text: '复制 Webhook 地址', style: 'margin-left:8px;' });
-    bakPanel.appendChild(btnExport);
-    bakPanel.appendChild(btnImport);
-    box.appendChild(bakPanel);
-
-    // Webhook 地址卡片（取第一个启用令牌）
-    try {
-      const tokData = await H.api('/api/tokens');
-      const tokens = tokData.tokens || [];
-      const first = tokens.find((t) => t.enabled) || tokens[0];
-      if (first) {
-        const card = H.el('div', { class: 'panel' });
-        card.appendChild(H.el('h3', { class: 'panel-title', text: 'Webhook 地址', style: 'font-size:var(--fs-l);' }));
-        const url = `${location.origin}/hook/${first.token}`;
-        const row = H.el('div', { style: 'display:flex;gap:8px;align-items:center;' });
-        const inp = H.el('input', { type: 'text', readonly: '', value: url, class: 'mono' });
-        const copyBtn = H.el('button', { class: 'btn btn-sm', text: '复制' });
-        row.appendChild(inp);
-        row.appendChild(copyBtn);
-        card.appendChild(row);
-        card.appendChild(H.el('p', {
-          class: 'field-hint', text: 'curl 示例:',
-          style: 'margin-top:var(--sp-2);',
-        }));
-        const curl = H.el('pre', {
-          text: `curl -X POST ${url} \\\n  -H "Content-Type: application/json" \\\n  -d '{"title":"Hello","body":"World","level":"info"}'`,
-          style: 'margin-top:4px;',
-        });
-        card.appendChild(curl);
-        box.appendChild(card);
-        copyBtn.addEventListener('click', async () => {
-          try { await navigator.clipboard.writeText(url); H.toast('已复制', 'ok'); }
-          catch { inp.select(); document.execCommand('copy'); H.toast('已复制（兼容模式）', 'ok'); }
-        });
-      }
-    } catch { /* 无令牌忽略 */ }
+    const bakActions = H.el('div', { class: 'page-actions' });
+    const btnExport = H.el('button', { class: 'btn', type: 'button', text: '导出全部配置' });
+    const btnImport = H.el('button', { class: 'btn', type: 'button', text: '导入 JSON 恢复' });
+    bakActions.appendChild(btnExport);
+    bakActions.appendChild(btnImport);
+    bak.appendChild(bakActions);
+    box.appendChild(bak);
 
     // 导出
     btnExport.addEventListener('click', async () => {
+      btnExport.disabled = true;
       try {
         const data = await H.api('/api/config/export');
         const blob = new Blob([JSON.stringify({ config: data.config }, null, 2)], { type: 'application/json' });
-        const a = H.el('a', { href: URL.createObjectURL(blob), download: `hookhub-config-${new Date().toISOString().slice(0, 10)}.json` });
+        const a = H.el('a', {
+          href: URL.createObjectURL(blob),
+          download: `hookhub-config-${new Date().toISOString().slice(0, 10)}.json`,
+        });
         document.body.appendChild(a);
         a.click();
         a.remove();
+        URL.revokeObjectURL(a.href);
         H.toast('已导出配置文件', 'ok');
-      } catch (e) { H.toast('导出失败: ' + e.message, 'err'); }
+      } catch (e) {
+        H.toast('导出失败: ' + e.message, 'err');
+      } finally {
+        btnExport.disabled = false;
+      }
     });
 
     // 导入
@@ -226,10 +262,9 @@
       document.body.appendChild(fileInput);
       fileInput.addEventListener('change', async () => {
         const file = fileInput.files[0];
-        if (!file) return;
+        if (!file) { fileInput.remove(); return; }
         try {
-          const text = await file.text();
-          const data = JSON.parse(text);
+          const data = JSON.parse(await file.text());
           if (!data.config) throw new Error('文件缺少 config 字段');
           const yes = await H.confirmDialog('导入将覆盖同名配置（渠道/令牌/路由/渠道组/全局设置）。确定继续？', { danger: true });
           if (!yes) return;

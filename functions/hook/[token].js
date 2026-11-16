@@ -15,7 +15,7 @@ import { dispatch } from '../_lib/dispatch.js';
 
 const MAX_BODY_BYTES = 64 * 1024; // 64KB 上限
 const REQ_LIMIT_PER_TOKEN = 60;   // 每 token 每分钟 60 次（内存）
-const GLOBAL_LIMIT = 3000;        // 单 isolate 每分钟总量保护
+const REQ_LIMIT_PER_IP = 3000;    // 单 IP 每分钟上限（防单点刷爆 isolate）
 
 export async function onRequest(context) {
   const { request, env, params } = context;
@@ -29,7 +29,11 @@ export async function onRequest(context) {
     return json({ ok: false, error: '服务未配置: ' + e.message }, 500);
   }
   const settings = await getSettings(store);
+  // corsHeaders 返回 null = 来源不在白名单，此时不能把 null 传给 Response 的 headers（会抛错）
   const cors = corsHeaders(settings, request);
+  if (cors === null) {
+    return json({ ok: false, error: '来源不在 CORS 白名单' }, 403);
+  }
 
   // OPTIONS 预检
   if (request.method === 'OPTIONS') {
@@ -43,12 +47,11 @@ export async function onRequest(context) {
 
   // ---- 内存限流（不写 KV）----
   const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
-  const tokenKey = `token:${token}`;
-  if (!slidingWindow(tokenKey, REQ_LIMIT_PER_TOKEN)) {
+  if (!slidingWindow(`token:${token}`, REQ_LIMIT_PER_TOKEN)) {
     return json({ ok: false, error: '请求过于频繁（该令牌每分钟限 60 次）' }, 429, cors);
   }
-  if (!slidingWindow(`global:${ip}`, GLOBAL_LIMIT)) {
-    return json({ ok: false, error: '请求过于频繁（全局保护）' }, 429, cors);
+  if (!slidingWindow(`ip:${ip}`, REQ_LIMIT_PER_IP)) {
+    return json({ ok: false, error: '请求过于频繁（单 IP 保护）' }, 429, cors);
   }
 
   // ---- 读取 body（大小受限）----
@@ -127,10 +130,10 @@ export async function onRequest(context) {
   }
 
   // ---- 读取路由并分发 ----
+  // listKeys('route:') 只匹配 route:xxx，不会带出 routes:index，无需额外过滤
   const routes = [];
   const routeKeys = await store.listKeys('route:');
   for (const k of routeKeys) {
-    if (k === 'routes:index') continue;
     const r = await store.get(k);
     if (r && r.enabled !== false) routes.push(r);
   }
